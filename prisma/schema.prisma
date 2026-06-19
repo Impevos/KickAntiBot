@@ -1,0 +1,164 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// Rol tanımları: Admin (Sistem yöneticisi), Streamer (Yayıncı/Kanal sahibi)
+enum Role {
+  ADMIN
+  STREAMER
+}
+
+/// Şüpheli kullanıcının durum takibi
+enum SuspiciousUserStatus {
+  DETECTED
+  INVESTIGATING
+  SAFE
+  BANNED
+}
+
+/// Şüphelilik/Tehdit seviyesi
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+/// Sistem bildirim türleri
+enum AlertType {
+  SPAM_ATTACK
+  BOT_FOLLOW_SPIKE
+  SUSPICIOUS_ACTIVITY
+  CHAT_GLITCH
+}
+
+/// Raporlama periyodu
+enum ReportPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+/// 1. Users (Kullanıcılar) - Supabase Auth ile eşleşen yayıncı/admin profilleri
+model User {
+  id           String    @id @default(uuid()) @db.Uuid // Supabase Auth UID'si ile eşleşir
+  email        String    @unique
+  displayName  String?
+  avatarUrl    String?
+  role         Role      @default(STREAMER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  
+  channels     Channel[]
+
+  @@map("users")
+}
+
+/// 2. Channels (Kanallar) - Takip edilen Kick kanalları
+model Channel {
+  id                 String           @id @default(uuid()) @db.Uuid
+  kickChannelId      String           @unique @map("kick_channel_id") // Kick üzerindeki özgün kanal id/slug
+  channelName        String           @map("channel_name")
+  kickAvatarUrl      String?          @map("kick_avatar_url")
+  kickFollowersCount Int              @default(0) @map("kick_followers_count")
+  isActive           Boolean          @default(true) @map("is_active")
+  
+  ownerId            String           @db.Uuid @map("owner_id")
+  owner              User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  suspiciousUsers    SuspiciousUser[]
+  alerts             Alert[]
+  reports            Report[]
+  
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@map("channels")
+}
+
+/// 3. SuspiciousUsers (Şüpheli Kullanıcılar) - Bot/spam şüphesi taşıyan Kick hesapları
+model SuspiciousUser {
+  id            String               @id @default(uuid()) @db.Uuid
+  kickUserId    String               @map("kick_user_id") // Kick'teki kullanıcı id'si
+  username      String
+  reason        String               // Şüphe sebebi (örn: "Aşırı hızlı mesaj gönderimi")
+  tags          String[]             // Etiketler (örn: ["spam", "follow-bot"])
+  status        SuspiciousUserStatus @default(DETECTED)
+  severity      Severity             @default(LOW)
+  
+  channelId     String               @db.Uuid @map("channel_id")
+  channel       Channel              @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  riskScores    RiskScore[]
+  alerts        Alert[]
+  
+  firstSeen     DateTime             @default(now()) @map("first_seen")
+  lastSeen      DateTime             @default(now()) @map("last_seen")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@index([channelId])
+  @@index([kickUserId])
+  @@map("suspicious_users")
+}
+
+/// 4. Alerts (Bildirimler) - Sistem tarafından üretilen güvenlik uyarıları
+model Alert {
+  id               String         @id @default(uuid()) @db.Uuid
+  type             AlertType
+  severity         Severity       @default(LOW)
+  message          String
+  isRead           Boolean        @default(false) @map("is_read")
+  
+  channelId        String         @db.Uuid @map("channel_id")
+  channel          Channel        @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  suspiciousUserId String?        @db.Uuid @map("suspicious_user_id")
+  suspiciousUser   SuspiciousUser? @relation(fields: [suspiciousUserId], references: [id], onDelete: SetNull)
+  
+  createdAt        DateTime       @default(now()) @map("created_at")
+  resolvedAt       DateTime?      @map("resolved_at")
+
+  @@index([channelId])
+  @@map("alerts")
+}
+
+/// 5. Reports (Raporlar) - Özet periyodik raporlar
+model Report {
+  id          String       @id @default(uuid()) @db.Uuid
+  period      ReportPeriod
+  startDate   DateTime     @map("start_date")
+  endDate     DateTime     @map("end_date")
+  summaryData Json         @map("summary_data") // İstatistikleri içeren JSON veri nesnesi
+  
+  channelId   String       @db.Uuid @map("channel_id")
+  channel     Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([channelId])
+  @@map("reports")
+}
+
+/// 6. RiskScores (Risk Skoru Kayıtları) - Zaman içindeki risk seviyesi geçmişi
+model RiskScore {
+  id               String         @id @default(uuid()) @db.Uuid
+  score            Int            // 0 - 100 arası risk skoru
+  reason           String         // Hesaplama nedeni veya tetikleyen olay
+  algorithmVersion String         @map("algorithm_version") // Algoritma versiyonu (örn: "v1.2.0")
+  metadata         Json?          // Hesaplamada kullanılan ham veri parametreleri
+  
+  suspiciousUserId String         @db.Uuid @map("suspicious_user_id")
+  suspiciousUser   SuspiciousUser @relation(fields: [suspiciousUserId], references: [id], onDelete: Cascade)
+  
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  @@index([suspiciousUserId])
+  @@map("risk_scores")
+}
