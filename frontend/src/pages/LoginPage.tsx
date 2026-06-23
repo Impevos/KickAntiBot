@@ -4,7 +4,7 @@ import { ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ApiError } from '../lib/api';
+import { ApiError, USE_MOCK } from '../lib/api';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -68,6 +68,11 @@ export function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {USE_MOCK && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                Mock mod aktif — herhangi bir e-posta ve şifre ile giriş yapabilirsiniz.
+              </div>
+            )}
             <Input
               label="E-posta"
               type="email"

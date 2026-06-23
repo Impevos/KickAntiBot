@@ -56,6 +56,17 @@ async function withMockFallback<T>(
 
 export const authService = {
   async login(email: string, password: string): Promise<LoginResponse> {
+    if (USE_MOCK) {
+      const mockResponse: LoginResponse = {
+        accessToken: 'mock-token',
+        refreshToken: 'mock-refresh',
+        expiresIn: 3600,
+        user: { ...MOCK_USER, email },
+      };
+      setTokens(mockResponse.accessToken, mockResponse.refreshToken);
+      return mockResponse;
+    }
+
     try {
       const data = await apiRequest<LoginResponse>(
         '/api/auth/login',
@@ -85,6 +96,10 @@ export const authService = {
     password: string,
     displayName: string,
   ): Promise<{ user: User }> {
+    if (USE_MOCK) {
+      return { user: { ...MOCK_USER, email, displayName } };
+    }
+
     return withMockFallback(
       () =>
         apiRequest<{ user: User }>(
