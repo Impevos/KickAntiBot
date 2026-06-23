@@ -92,6 +92,21 @@ Uygulama `http://localhost:3000` adresinde çalışır.
 
 ---
 
+## Frontend Panel
+
+React + TypeScript + Tailwind CSS ile geliştirilmiş yayıncı paneli `frontend/` klasöründedir.
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Panel `http://localhost:5173` adresinde çalışır. Detaylar için [frontend/README.md](./frontend/README.md) dosyasına bakın.
+
+---
+
 ## API Dokümantasyonu
 
 Frontend entegrasyonu için detaylı endpoint dokümantasyonu:
