@@ -7,6 +7,8 @@ import { SuspiciousUsersModule } from './suspicious-users/suspicious-users.modul
 import { RiskScoresModule } from './risk-scores/risk-scores.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { ReportsModule } from './reports/reports.module';
+import { ProtectionSettingsModule } from './protection-settings/protection-settings.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { ReportsModule } from './reports/reports.module';
     RiskScoresModule,
     AlertsModule,
     ReportsModule,
+    ProtectionSettingsModule,
+    ActivityLogsModule,
   ],
   controllers: [],
   providers: [],

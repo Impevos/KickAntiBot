@@ -3,6 +3,8 @@ import { SupabaseService } from './supabase.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -122,6 +124,55 @@ export class AuthService {
     return {
       success: true,
       message: 'Başarıyla çıkış yapıldı.',
+    };
+  }
+
+  async getProfile(user: User) {
+    const profile = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        _count: {
+          select: { channels: true },
+        },
+        channels: {
+          select: {
+            id: true,
+            kickChannelId: true,
+            channelName: true,
+            kickAvatarUrl: true,
+            isActive: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new BadRequestException('Kullanıcı profili bulunamadı.');
+    }
+
+    const { channels, _count, ...userData } = profile;
+
+    return {
+      success: true,
+      data: {
+        ...userData,
+        channelCount: _count.channels,
+        channels,
+      },
+    };
+  }
+
+  async updateProfile(user: User, updateProfileDto: UpdateProfileDto) {
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: updateProfileDto,
+    });
+
+    return {
+      success: true,
+      message: 'Profil başarıyla güncellendi.',
+      data: updatedUser,
     };
   }
 }

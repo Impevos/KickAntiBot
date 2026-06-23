@@ -75,11 +75,30 @@ model Channel {
   suspiciousUsers    SuspiciousUser[]
   alerts             Alert[]
   reports            Report[]
+  protectionSettings ChannelProtectionSettings?
   
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
 
   @@map("channels")
+}
+
+/// 7. ChannelProtectionSettings (Koruma Ayarları) - Kanal bazlı bot koruma yapılandırması
+model ChannelProtectionSettings {
+  id                   String   @id @default(uuid()) @db.Uuid
+  channelId            String   @unique @db.Uuid @map("channel_id")
+  channel              Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  autoBlockEnabled     Boolean  @default(false) @map("auto_block_enabled")
+  autoBanEnabled       Boolean  @default(false) @map("auto_ban_enabled")
+  alertOnDetection     Boolean  @default(true) @map("alert_on_detection")
+  riskScoreThreshold   Int      @default(70) @map("risk_score_threshold")
+  maxMessagesPerMinute Int      @default(10) @map("max_messages_per_minute")
+
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("channel_protection_settings")
 }
 
 /// 3. SuspiciousUsers (Şüpheli Kullanıcılar) - Bot/spam şüphesi taşıyan Kick hesapları

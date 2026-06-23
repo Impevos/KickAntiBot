@@ -1,8 +1,11 @@
-import { Controller, Post, Body, Req, UseGuards, Headers } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GetUser } from '../common/decorators/get-user.decorator';
+import { User } from '@prisma/client';
 
 @Controller('api/auth')
 export class AuthController {
@@ -21,8 +24,19 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   async logout(@Headers('authorization') authHeader: string) {
-    // Extract token from Bearer <token>
     const token = authHeader.replace('Bearer ', '');
     return this.authService.logout(token);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@GetUser() user: User) {
+    return this.authService.getProfile(user);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@GetUser() user: User, @Body() updateProfileDto: UpdateProfileDto) {
+    return this.authService.updateProfile(user, updateProfileDto);
   }
 }

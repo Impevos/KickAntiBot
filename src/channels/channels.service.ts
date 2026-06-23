@@ -31,6 +31,12 @@ export class ChannelsService {
         kickAvatarUrl: mockAvatarUrl,
         kickFollowersCount: mockFollowersCount,
         ownerId: user.id,
+        protectionSettings: {
+          create: {},
+        },
+      },
+      include: {
+        protectionSettings: true,
       },
     });
 

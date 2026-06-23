@@ -1,62 +1,158 @@
-# Kick Anti-Bot Koruma Sistemi - Backend Servisi
+# Kick Anti-Bot Koruma Sistemi — Backend Servisi
 
 Bu servis, Kick yayıncılarının kanallarındaki bot saldırılarını ve spamleri takip eden, Supabase Auth tabanlı çalışan NestJS backend uygulamasıdır.
 
 ## Kullanılan Teknolojiler
-- **Node.js** (v18 veya üzeri)
-- **NestJS** (Modüler Backend Framework)
-- **PostgreSQL / Supabase** (Veritabanı ve Kimlik Doğrulama)
-- **Prisma** (ORM - Veritabanı ve Kod Arasındaki Köprü)
+
+- **Node.js** v18 veya üzeri
+- **NestJS** — Modüler backend framework
+- **PostgreSQL / Supabase** — Veritabanı ve kimlik doğrulama
+- **Prisma** — ORM
 
 ---
 
 ## Adım Adım Kurulum Rehberi
 
-Backend konusunda deneyimli olmasanız bile aşağıdaki adımları sırayla takip ederek projeyi bilgisayarınızda çalıştırabilirsiniz:
+Aşağıdaki adımları sırayla takip ederek projeyi kendi bilgisayarınızda çalıştırabilirsiniz.
 
-### 1. Gereksinimlerin Kurulması
-Bilgisayarınızda şunların kurulu olduğundan emin olun:
-- **Node.js**: [https://nodejs.org/](https://nodejs.org/) adresinden indirip kurabilirsiniz. (LTS sürümü tavsiye edilir)
-- **Git**: Kod yönetimi için.
+### 1. Gereksinimler
 
-### 2. Bağımlılıkların Yüklenmesi
-Terminal/Komut İstemi ekranını açın, proje klasörüne gidin ve şu komutu çalıştırarak gerekli tüm kütüphaneleri yükleyin:
+- [Node.js](https://nodejs.org/) (LTS sürümü önerilir)
+- [Git](https://git-scm.com/)
+- Bir [Supabase](https://supabase.com/) projesi (ücretsiz plan yeterli)
+
+### 2. Projeyi Klonlayın
+
+```bash
+git clone https://github.com/Impevos/KickAntiBot.git
+cd KickAntiBot
+```
+
+### 3. Bağımlılıkları Yükleyin
+
 ```bash
 npm install
 ```
 
-### 3. Çevre Değişkenlerinin (.env) Ayarlanması
-Proje klasöründeki `.env.example` dosyasının adını `.env` olarak değiştirin ve içeriğini kendinize göre düzenleyin:
-- `DATABASE_URL`: Supabase projenizden aldığınız PostgreSQL bağlantı adresi.
-- `SUPABASE_URL` ve `SUPABASE_ANON_KEY`: Supabase panelinizdeki API ayarlarından alınan bilgiler.
-- `JWT_SECRET`: Güvenli, rastgele bir karakter dizisi yazabilirsiniz.
+### 4. Çevre Değişkenlerini Ayarlayın
 
-### 4. Veritabanının Hazırlanması (Prisma)
-Veritabanı tablolarını Supabase üzerinde otomatik oluşturmak için sırasıyla şu komutları çalıştırın:
+`.env.example` dosyasını `.env` olarak kopyalayın ve Supabase bilgilerinizle doldurun:
+
+```bash
+cp .env.example .env
+```
+
+**Gerekli değişkenler:**
+
+| Değişken | Nereden Alınır |
+|----------|----------------|
+| `DATABASE_URL` | Supabase → Project Settings → Database → Connection string → **Transaction pooler** (port 6543) |
+| `DIRECT_URL` | Supabase → Project Settings → Database → Connection string → **Session pooler** (port 5432) |
+| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+| `SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public key |
+| `JWT_SECRET` | Rastgele güvenli bir string (örn. `openssl rand -hex 32`) |
+| `PORT` | Sunucu portu (varsayılan: 3000) |
+
+> **Önemli:** Prisma şema işlemleri (`db push`, `migrate`) için hem `DATABASE_URL` hem `DIRECT_URL` gereklidir.
+
+### 5. Veritabanını Hazırlayın
+
 ```bash
 # Prisma istemcisini oluşturur
 npx prisma generate
 
-# Modelleri veritabanına yansıtır (Tabloları oluşturur)
+# Tabloları veritabanına yansıtır
 npx prisma db push
 ```
 
-### 5. Projenin Çalıştırılması
-Projeyi geliştirme modunda (kodda değişiklik yaptıkça otomatik yenilenen mod) çalıştırmak için:
+### 6. (Opsiyonel) Demo Veri Ekleyin
+
+Önce uygulamayı çalıştırıp `/api/auth/register` ile kayıt olun, ardından:
+
 ```bash
-npm run start:dev
+# Windows PowerShell
+$env:SEED_OWNER_EMAIL="kayit-olunan-email@adres.com"; npx prisma db seed
+
+# macOS / Linux
+SEED_OWNER_EMAIL=kayit-olunan-email@adres.com npx prisma db seed
 ```
-Uygulama varsayılan olarak `http://localhost:3000` portunda çalışmaya başlayacaktır.
+
+### 7. Uygulamayı Başlatın
+
+```bash
+# Geliştirme modu (hot reload)
+npm run start:dev
+
+# Üretim build
+npm run build
+npm run start:prod
+```
+
+Uygulama `http://localhost:3000` adresinde çalışır.
 
 ---
 
-## Proje Klasör Yapısı Hakkında Kısa Bilgi
+## API Dokümantasyonu
 
-- `prisma/schema.prisma`: Veritabanı tablolarımızı ve aralarındaki ilişkileri tanımladığımız yer.
-- `src/main.ts`: Backend sunucumuzun çalışmaya başladığı ana giriş kapısı.
-- `src/auth/`: Giriş/Kayıt ve şifre kontrol mekanizmalarını yönetir.
-- `src/channels/`: Yayıncının takip ettiği Kick kanallarının yönetimini sağlar.
-- `src/suspicious-users/`: Bot şüphesiyle işaretlenmiş kullanıcıları listeler.
-- `src/alerts/`: Sistem tarafından yakalanan acil durum bildirimlerini tutar.
-- `src/reports/`: Haftalık/günlük özet rapor verilerini tutar.
-- `src/risk-scores/`: Kullanıcıların risk puanı geçmişini kaydeder.
+Frontend entegrasyonu için detaylı endpoint dokümantasyonu:
+
+👉 **[API_DOCS.md](./API_DOCS.md)**
+
+---
+
+## Proje Klasör Yapısı
+
+```
+src/
+├── auth/                 # Giriş, kayıt, profil
+├── channels/             # Kick kanal yönetimi
+├── suspicious-users/     # Şüpheli kullanıcı listesi (bot aktivite)
+├── risk-scores/          # Risk skoru geçmişi
+├── alerts/               # Güvenlik bildirimleri
+├── reports/              # Periyodik raporlar + dashboard özeti
+├── protection-settings/  # Kanal bazlı koruma ayarları
+├── activity-logs/        # Birleşik geçmiş kayıtları
+└── common/               # Prisma, filtreler, decorator'lar
+```
+
+---
+
+## Test
+
+```bash
+# E2E API testleri (24 test, Supabase bağlantısı gerektirir)
+npm run test:e2e
+
+# Build kontrolü
+npm run build
+```
+
+---
+
+## Yararlı Komutlar
+
+```bash
+# Veritabanı şemasını görsel olarak incele
+npx prisma studio
+
+# Lint kontrolü
+npm run lint
+```
+
+---
+
+## Sorun Giderme
+
+| Sorun | Çözüm |
+|-------|-------|
+| `PrismaClientInitializationError` | `.env` dosyasındaki `DATABASE_URL` ve `DIRECT_URL` değerlerini kontrol edin |
+| `Supabase URL or Anon Key is missing` | `SUPABASE_URL` ve `SUPABASE_ANON_KEY` değerlerini kontrol edin |
+| `Authorization başlığı eksik` (401) | İstek header'ına `Authorization: Bearer <token>` ekleyin |
+| `email rate limit exceeded` | Supabase ücretsiz planda kayıt limiti vardır; birkaç dakika bekleyin |
+| Port 3000 kullanımda | `.env` dosyasında `PORT=3001` gibi farklı bir port deneyin |
+
+---
+
+## Lisans
+
+Bu proje özel kullanım içindir.
