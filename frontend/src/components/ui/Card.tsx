@@ -5,14 +5,17 @@ interface CardProps {
   children: ReactNode;
   className?: string;
   padding?: boolean;
+  onClick?: () => void;
 }
 
-export function Card({ children, className, padding = true }: CardProps) {
+export function Card({ children, className, padding = true, onClick }: CardProps) {
   return (
     <div
+      onClick={onClick}
       className={cn(
         'rounded-2xl border border-border bg-surface-elevated',
         padding && 'p-5',
+        onClick && 'cursor-pointer',
         className,
       )}
     >

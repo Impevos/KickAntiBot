@@ -17,8 +17,8 @@ Panel `http://localhost:5173` adresinde çalışır. Backend `http://localhost:3
 
 | Değişken | Açıklama |
 |----------|----------|
-| `VITE_API_BASE_URL` | Backend API adresi (varsayılan: `http://localhost:3000`) |
-| `VITE_USE_MOCK_DATA` | `true` ise sadece mock veri kullanılır |
+| `VITE_API_BASE_URL` | Backend API adresi. Geliştirmede boş bırakın (Vite proxy kullanır). |
+| `VITE_USE_MOCK_DATA` | `true` ise backend olmadan mock veri kullanılır |
 
 ## Sayfalar
 
@@ -32,6 +32,6 @@ Panel `http://localhost:5173` adresinde çalışır. Backend `http://localhost:3
 
 ## API Entegrasyonu
 
-Tüm servisler `src/services/api-services.ts` içindedir. API hatası durumunda otomatik olarak mock veriye düşer; geliştirme sırasında ekranlar boş kalmaz.
+Tüm servisler `src/services/api-services.ts` içindedir. `VITE_USE_MOCK_DATA=true` iken API hatalarında mock veriye düşer; `false` iken gerçek hatalar ekranda gösterilir.
 
 Detaylı endpoint dokümantasyonu için kök dizindeki [API_DOCS.md](../API_DOCS.md) dosyasına bakın.

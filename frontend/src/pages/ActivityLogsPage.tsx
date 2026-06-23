@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useChannel } from '../context/ChannelContext';
-import { activityLogsService } from '../services/api-services';
+import { useActivityLogs } from '../hooks/use-activity-logs';
 import { Card } from '../components/ui/Card';
+import { Pagination } from '../components/ui/Pagination';
 import { SeverityBadge } from '../components/ui/Badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/LoadingSpinner';
 import { formatDate } from '../lib/utils';
-import type { ActivityLog, ActivityLogType } from '../types/api';
+import { ApiError } from '../lib/api';
+import type { ActivityLogType } from '../types/api';
+
+const PAGE_SIZE = 20;
 
 const typeLabels: Record<ActivityLogType, string> = {
   ALERT: 'Alarm',
@@ -23,25 +27,23 @@ const typeColors: Record<ActivityLogType, string> = {
 
 export function ActivityLogsPage() {
   const { activeChannel } = useChannel();
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<ActivityLogType | ''>('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (!activeChannel) return;
-    setIsLoading(true);
-    activityLogsService
-      .getLogs({
-        channelId: activeChannel.id,
-        type: typeFilter || undefined,
-      })
-      .then(({ data, totalItems: total }) => {
-        setLogs(data);
-        setTotalItems(total);
-      })
-      .finally(() => setIsLoading(false));
-  }, [activeChannel, typeFilter]);
+    setPage(1);
+  }, [typeFilter]);
+
+  const { data, isLoading, error } = useActivityLogs({
+    channelId: activeChannel?.id,
+    type: typeFilter || undefined,
+    page,
+    limit: PAGE_SIZE,
+  });
+
+  const logs = data?.data ?? [];
+  const totalItems = data?.totalItems ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div className="space-y-4">
@@ -60,7 +62,13 @@ export function ActivityLogsPage() {
         </select>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error instanceof ApiError
+            ? error.message
+            : 'Log kayıtları yüklenemedi.'}
+        </div>
+      ) : isLoading ? (
         <LoadingSpinner />
       ) : logs.length === 0 ? (
         <EmptyState
@@ -68,29 +76,38 @@ export function ActivityLogsPage() {
           description="Henüz sistem aktivitesi yok"
         />
       ) : (
-        <div className="space-y-3">
-          {logs.map((log) => (
-            <Card key={log.id} padding>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-3">
-                  <span
-                    className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium ${typeColors[log.type]}`}
-                  >
-                    {typeLabels[log.type]}
-                  </span>
-                  <div>
-                    <p className="font-medium text-white">{log.title}</p>
-                    <p className="mt-0.5 text-sm text-muted">{log.description}</p>
-                    <p className="mt-2 text-xs text-muted/70">
-                      {formatDate(log.createdAt)}
-                    </p>
+        <>
+          <div className="space-y-3">
+            {logs.map((log) => (
+              <Card key={log.id} padding>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium ${typeColors[log.type]}`}
+                    >
+                      {typeLabels[log.type]}
+                    </span>
+                    <div>
+                      <p className="font-medium text-white">{log.title}</p>
+                      <p className="mt-0.5 text-sm text-muted">{log.description}</p>
+                      <p className="mt-2 text-xs text-muted/70">
+                        {formatDate(log.createdAt)}
+                      </p>
+                    </div>
                   </div>
+                  <SeverityBadge severity={log.severity} />
                 </div>
-                <SeverityBadge severity={log.severity} />
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </div>
   );

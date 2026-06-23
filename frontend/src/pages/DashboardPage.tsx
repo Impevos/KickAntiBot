@@ -1,39 +1,59 @@
-import { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   Bot,
   Shield,
   TrendingUp,
   Activity,
+  FileText,
+  Check,
 } from 'lucide-react';
 import { useChannel } from '../context/ChannelContext';
-import { dashboardService } from '../services/api-services';
+import { useDashboardSummary } from '../hooks/use-dashboard';
+import { useAlerts, useMarkAlertRead } from '../hooks/use-alerts';
+import { useReports } from '../hooks/use-reports';
 import { StatCard, Card } from '../components/ui/Card';
 import { SeverityBadge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { formatRelative } from '../lib/utils';
-import type { DashboardSummary } from '../types/api';
+import { formatRelative, formatDate } from '../lib/utils';
+import { ApiError } from '../lib/api';
+
+const periodLabels = {
+  DAILY: 'Günlük',
+  WEEKLY: 'Haftalık',
+  MONTHLY: 'Aylık',
+} as const;
 
 export function DashboardPage() {
   const { activeChannel } = useChannel();
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const channelId = activeChannel?.id;
 
-  useEffect(() => {
-    if (!activeChannel) return;
-    setIsLoading(true);
-    dashboardService
-      .getSummary(activeChannel.id)
-      .then(setSummary)
-      .finally(() => setIsLoading(false));
-  }, [activeChannel]);
+  const { data: summary, isLoading, error } = useDashboardSummary(channelId);
+  const { data: alerts = [], isLoading: alertsLoading } = useAlerts(channelId);
+  const { data: reports = [], isLoading: reportsLoading } = useReports(channelId);
+  const markRead = useMarkAlertRead(channelId);
 
-  if (isLoading || !summary) {
+  if (isLoading) {
     return <LoadingSpinner label="Dashboard yükleniyor..." />;
+  }
+
+  if (error || !summary) {
+    return (
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        {error instanceof ApiError
+          ? error.message
+          : 'Dashboard verileri yüklenemedi.'}
+      </div>
+    );
   }
 
   const bannedCount = summary.totalSuspiciousUsersCount;
   const protectionActive = summary.activeAlertsCount >= 0;
+
+  const handleMarkRead = (alertId: string, isRead: boolean) => {
+    if (!isRead) {
+      markRead.mutate(alertId);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -71,19 +91,23 @@ export function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-white">Son Aktiviteler</h2>
+            <h2 className="text-base font-semibold text-white">Alarmlar</h2>
             <Activity className="h-4 w-4 text-muted" />
           </div>
-          <div className="space-y-3">
-            {summary.recentAlerts.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted">
-                Henüz aktivite bulunmuyor.
-              </p>
-            ) : (
-              summary.recentAlerts.map((alert) => (
-                <div
+          {alertsLoading ? (
+            <LoadingSpinner />
+          ) : alerts.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">
+              Henüz alarm bulunmuyor.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {alerts.map((alert) => (
+                <button
                   key={alert.id}
-                  className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3 transition hover:bg-surface-hover"
+                  type="button"
+                  onClick={() => handleMarkRead(alert.id, alert.isRead)}
+                  className="flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 text-left transition hover:bg-surface-hover"
                 >
                   <div
                     className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
@@ -96,6 +120,14 @@ export function DashboardPage() {
                         {alert.type.replace(/_/g, ' ')}
                       </span>
                       <SeverityBadge severity={alert.severity} />
+                      {!alert.isRead && (
+                        <span className="text-xs text-muted">
+                          Okundu işaretle
+                        </span>
+                      )}
+                      {alert.isRead && (
+                        <Check className="h-3.5 w-3.5 text-kick" />
+                      )}
                     </div>
                     <p className="mt-0.5 text-sm text-muted truncate">
                       {alert.message}
@@ -104,10 +136,10 @@ export function DashboardPage() {
                       {formatRelative(alert.createdAt)}
                     </p>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card>
@@ -136,6 +168,61 @@ export function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      <Card>
+        <div className="mb-4 flex items-center gap-2">
+          <FileText className="h-4 w-4 text-kick" />
+          <h2 className="text-base font-semibold text-white">Periyodik Raporlar</h2>
+        </div>
+        {reportsLoading ? (
+          <LoadingSpinner />
+        ) : reports.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted">
+            Henüz rapor bulunmuyor.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {reports.map((report) => (
+              <div
+                key={report.id}
+                className="rounded-xl border border-border bg-surface p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="rounded-md bg-kick/10 px-2 py-0.5 text-xs font-medium text-kick">
+                    {periodLabels[report.period]}
+                  </span>
+                  <span className="text-xs text-muted">
+                    {formatDate(report.createdAt)}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted">
+                  {formatDate(report.startDate)} — {formatDate(report.endDate)}
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-bold text-white">
+                      {report.summaryData.totalBotsDetected}
+                    </p>
+                    <p className="text-[10px] text-muted">Bot</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-white">
+                      {report.summaryData.totalAlerts}
+                    </p>
+                    <p className="text-[10px] text-muted">Alarm</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-kick">
+                      {report.summaryData.averageRiskScore.toFixed(1)}
+                    </p>
+                    <p className="text-[10px] text-muted">Risk</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

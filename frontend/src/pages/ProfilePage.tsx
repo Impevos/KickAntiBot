@@ -1,33 +1,67 @@
 import { useEffect, useState } from 'react';
-import { User, Tv, Mail, Calendar, Save } from 'lucide-react';
+import {
+  User,
+  Tv,
+  Mail,
+  Calendar,
+  Save,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { authService } from '../services/api-services';
+import { useChannel } from '../context/ChannelContext';
+import { authService, channelService } from '../services/api-services';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { formatDate } from '../lib/utils';
-import type { User as UserType } from '../types/api';
+import { ApiError } from '../lib/api';
+import type { Channel, User as UserType } from '../types/api';
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
+  const { refreshChannels } = useChannel();
   const [profile, setProfile] = useState<UserType | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [kickChannelId, setKickChannelId] = useState('');
+  const [channelName, setChannelName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddingChannel, setIsAddingChannel] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [channelError, setChannelError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
+  const [editChannelName, setEditChannelName] = useState('');
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [channelActionLoading, setChannelActionLoading] = useState<
+    string | null
+  >(null);
+
+  const loadProfile = async () => {
+    setIsLoading(true);
+    setLoadError('');
+    try {
+      const data = await authService.getMe();
+      setProfile(data);
+      setDisplayName(data.displayName);
+      setAvatarUrl(data.avatarUrl || '');
+    } catch (err: unknown) {
+      setLoadError(
+        err instanceof ApiError ? err.message : 'Profil yüklenemedi.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setIsLoading(true);
-    authService
-      .getMe()
-      .then((data) => {
-        setProfile(data);
-        setDisplayName(data.displayName);
-        setAvatarUrl(data.avatarUrl || '');
-      })
-      .finally(() => setIsLoading(false));
+    loadProfile();
   }, [user]);
 
   const handleSave = async () => {
@@ -46,8 +80,84 @@ export function ProfilePage() {
     }
   };
 
-  if (isLoading || !profile) {
+  const handleAddChannel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChannelError('');
+    setIsAddingChannel(true);
+    try {
+      await channelService.createChannel({ kickChannelId, channelName });
+      setKickChannelId('');
+      setChannelName('');
+      await Promise.all([refreshUser(), refreshChannels(), loadProfile()]);
+    } catch (err: unknown) {
+      setChannelError(
+        err instanceof ApiError ? err.message : 'Kanal eklenemedi.',
+      );
+    } finally {
+      setIsAddingChannel(false);
+    }
+  };
+
+  const startEditChannel = (channel: Channel) => {
+    setEditingChannelId(channel.id);
+    setEditChannelName(channel.channelName);
+    setEditIsActive(channel.isActive);
+    setChannelError('');
+  };
+
+  const cancelEditChannel = () => {
+    setEditingChannelId(null);
+    setEditChannelName('');
+    setEditIsActive(true);
+  };
+
+  const handleUpdateChannel = async (id: string) => {
+    setChannelActionLoading(id);
+    setChannelError('');
+    try {
+      await channelService.updateChannel(id, {
+        channelName: editChannelName,
+        isActive: editIsActive,
+      });
+      cancelEditChannel();
+      await Promise.all([refreshUser(), refreshChannels(), loadProfile()]);
+    } catch (err: unknown) {
+      setChannelError(
+        err instanceof ApiError ? err.message : 'Kanal güncellenemedi.',
+      );
+    } finally {
+      setChannelActionLoading(null);
+    }
+  };
+
+  const handleDeleteChannel = async (id: string, name: string) => {
+    if (!window.confirm(`"${name}" kanalını silmek istediğinize emin misiniz?`)) {
+      return;
+    }
+    setChannelActionLoading(id);
+    setChannelError('');
+    try {
+      await channelService.deleteChannel(id);
+      await Promise.all([refreshUser(), refreshChannels(), loadProfile()]);
+    } catch (err: unknown) {
+      setChannelError(
+        err instanceof ApiError ? err.message : 'Kanal silinemedi.',
+      );
+    } finally {
+      setChannelActionLoading(null);
+    }
+  };
+
+  if (isLoading) {
     return <LoadingSpinner label="Profil yükleniyor..." />;
+  }
+
+  if (loadError || !profile) {
+    return (
+      <div className="mx-auto max-w-3xl rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        {loadError || 'Profil yüklenemedi.'}
+      </div>
+    );
   }
 
   return (
@@ -127,24 +237,82 @@ export function ProfilePage() {
             {profile.channels.map((channel) => (
               <div
                 key={channel.id}
-                className="flex items-center gap-4 rounded-xl bg-surface p-4"
+                className="rounded-xl bg-surface p-4"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-kick/10 text-sm font-bold text-kick">
-                  {channel.channelName.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-white">{channel.channelName}</p>
-                  <p className="text-xs text-muted">@{channel.kickChannelId}</p>
-                </div>
-                <span
-                  className={`rounded-md px-2 py-0.5 text-xs font-medium ${
-                    channel.isActive
-                      ? 'bg-kick/10 text-kick'
-                      : 'bg-zinc-500/10 text-zinc-400'
-                  }`}
-                >
-                  {channel.isActive ? 'Aktif' : 'Pasif'}
-                </span>
+                {editingChannelId === channel.id ? (
+                  <div className="space-y-3">
+                    <Input
+                      label="Kanal Görünen Adı"
+                      value={editChannelName}
+                      onChange={(e) => setEditChannelName(e.target.value)}
+                    />
+                    <label className="flex items-center gap-2 text-sm text-white">
+                      <input
+                        type="checkbox"
+                        checked={editIsActive}
+                        onChange={(e) => setEditIsActive(e.target.checked)}
+                        className="accent-kick"
+                      />
+                      Kanal aktif
+                    </label>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleUpdateChannel(channel.id)}
+                        isLoading={channelActionLoading === channel.id}
+                      >
+                        <Check className="h-4 w-4" />
+                        Kaydet
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={cancelEditChannel}
+                      >
+                        <X className="h-4 w-4" />
+                        İptal
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-kick/10 text-sm font-bold text-kick">
+                      {channel.channelName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{channel.channelName}</p>
+                      <p className="text-xs text-muted">@{channel.kickChannelId}</p>
+                    </div>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-xs font-medium ${
+                        channel.isActive
+                          ? 'bg-kick/10 text-kick'
+                          : 'bg-zinc-500/10 text-zinc-400'
+                      }`}
+                    >
+                      {channel.isActive ? 'Aktif' : 'Pasif'}
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => startEditChannel(channel)}
+                        className="rounded-lg p-2 text-muted hover:bg-surface-hover hover:text-white"
+                        title="Düzenle"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDeleteChannel(channel.id, channel.channelName)
+                        }
+                        disabled={channelActionLoading === channel.id}
+                        className="rounded-lg p-2 text-muted hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                        title="Sil"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -153,6 +321,33 @@ export function ProfilePage() {
             Henüz bağlı Kick kanalı bulunmuyor.
           </p>
         )}
+
+        <form onSubmit={handleAddChannel} className="mt-6 space-y-3 border-t border-border pt-6">
+          <p className="text-sm font-medium text-white">Yeni Kanal Ekle</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              label="Kick Kanal ID (slug)"
+              placeholder="kanal-adi"
+              value={kickChannelId}
+              onChange={(e) => setKickChannelId(e.target.value)}
+              required
+            />
+            <Input
+              label="Kanal Görünen Adı"
+              placeholder="Kanal Adım"
+              value={channelName}
+              onChange={(e) => setChannelName(e.target.value)}
+              required
+            />
+          </div>
+          {channelError && (
+            <p className="text-sm text-red-400">{channelError}</p>
+          )}
+          <Button type="submit" isLoading={isAddingChannel}>
+            <Plus className="h-4 w-4" />
+            Kanal Ekle
+          </Button>
+        </form>
       </Card>
     </div>
   );

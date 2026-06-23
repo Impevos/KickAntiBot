@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Search, Filter } from 'lucide-react';
 import { useChannel } from '../context/ChannelContext';
-import { suspiciousUsersService } from '../services/api-services';
+import { useSuspiciousUsers } from '../hooks/use-suspicious-users';
+import { SuspiciousUserDetailModal } from '../components/SuspiciousUserDetailModal';
 import { Card } from '../components/ui/Card';
+import { Pagination } from '../components/ui/Pagination';
 import { SeverityBadge, StatusBadge } from '../components/ui/Badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/LoadingSpinner';
 import {
@@ -10,44 +12,46 @@ import {
   getStatusLabel,
   getStatusStyle,
 } from '../lib/utils';
+import { ApiError } from '../lib/api';
 import type {
   AlertSeverity,
-  SuspiciousUser,
   SuspiciousUserStatus,
 } from '../types/api';
 
+const PAGE_SIZE = 10;
+
 export function BotActivityPage() {
   const { activeChannel } = useChannel();
-  const [users, setUsers] = useState<SuspiciousUser[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<SuspiciousUserStatus | ''>(
     '',
   );
   const [severityFilter, setSeverityFilter] = useState<AlertSeverity | ''>('');
+  const [page, setPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!activeChannel) return;
-
-    const timer = setTimeout(() => {
-      setIsLoading(true);
-      suspiciousUsersService
-        .getList({
-          channelId: activeChannel.id,
-          search: search || undefined,
-          status: statusFilter || undefined,
-          severity: severityFilter || undefined,
-        })
-        .then(({ data, totalItems: total }) => {
-          setUsers(data);
-          setTotalItems(total);
-        })
-        .finally(() => setIsLoading(false));
-    }, 300);
-
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
-  }, [activeChannel, search, statusFilter, severityFilter]);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, severityFilter]);
+
+  const { data, isLoading, error } = useSuspiciousUsers({
+    channelId: activeChannel?.id,
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+    severity: severityFilter || undefined,
+    page,
+    limit: PAGE_SIZE,
+  });
+
+  const users = data?.data ?? [];
+  const totalItems = data?.totalItems ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div className="space-y-4">
@@ -97,7 +101,13 @@ export function BotActivityPage() {
         </div>
       </Card>
 
-      {isLoading ? (
+      {error ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error instanceof ApiError
+            ? error.message
+            : 'Şüpheli kullanıcılar yüklenemedi.'}
+        </div>
+      ) : isLoading ? (
         <LoadingSpinner />
       ) : users.length === 0 ? (
         <EmptyState
@@ -106,10 +116,6 @@ export function BotActivityPage() {
         />
       ) : (
         <>
-          <p className="text-sm text-muted">
-            Toplam {totalItems} kayıt bulundu
-          </p>
-
           <div className="hidden overflow-hidden rounded-2xl border border-border lg:block">
             <table className="w-full text-sm">
               <thead>
@@ -126,7 +132,8 @@ export function BotActivityPage() {
                 {users.map((user) => (
                   <tr
                     key={user.id}
-                    className="border-b border-border/50 transition hover:bg-surface-hover"
+                    onClick={() => setSelectedUserId(user.id)}
+                    className="cursor-pointer border-b border-border/50 transition hover:bg-surface-hover"
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-white">{user.username}</p>
@@ -167,7 +174,12 @@ export function BotActivityPage() {
 
           <div className="space-y-3 lg:hidden">
             {users.map((user) => (
-              <Card key={user.id} padding>
+              <Card
+                key={user.id}
+                padding
+                className="cursor-pointer"
+                onClick={() => setSelectedUserId(user.id)}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium text-white">{user.username}</p>
@@ -195,7 +207,21 @@ export function BotActivityPage() {
               </Card>
             ))}
           </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onPageChange={setPage}
+          />
         </>
+      )}
+
+      {selectedUserId && (
+        <SuspiciousUserDetailModal
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
       )}
     </div>
   );

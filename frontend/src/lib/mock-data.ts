@@ -126,6 +126,52 @@ export const MOCK_PROTECTION_SETTINGS: ProtectionSettings = {
   updatedAt: '2026-06-20T10:00:00.000Z',
 };
 
+export const MOCK_RISK_SCORES = [
+  {
+    id: 'rs-1',
+    score: 85,
+    reason: 'Yüksek mesaj frekansı',
+    algorithmVersion: 'v1.0.0',
+    metadata: { messagesPerMinute: 52 },
+    createdAt: '2026-06-23T10:00:00.000Z',
+  },
+  {
+    id: 'rs-2',
+    score: 72,
+    reason: 'Tekrarlayan mesaj kalıbı',
+    algorithmVersion: 'v1.0.0',
+    metadata: { messagesPerMinute: 38 },
+    createdAt: '2026-06-22T15:00:00.000Z',
+  },
+];
+
+export const MOCK_REPORTS = [
+  {
+    id: 'report-1',
+    period: 'WEEKLY' as const,
+    startDate: '2026-06-13T00:00:00.000Z',
+    endDate: '2026-06-20T00:00:00.000Z',
+    summaryData: {
+      totalBotsDetected: 12,
+      totalAlerts: 8,
+      averageRiskScore: 65.4,
+    },
+    createdAt: '2026-06-20T00:00:00.000Z',
+  },
+  {
+    id: 'report-2',
+    period: 'DAILY' as const,
+    startDate: '2026-06-22T00:00:00.000Z',
+    endDate: '2026-06-23T00:00:00.000Z',
+    summaryData: {
+      totalBotsDetected: 3,
+      totalAlerts: 2,
+      averageRiskScore: 58.1,
+    },
+    createdAt: '2026-06-23T00:00:00.000Z',
+  },
+];
+
 export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: 'log-1',

@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Shield, ShieldAlert, ShieldCheck, Save } from 'lucide-react';
 import { useChannel } from '../context/ChannelContext';
-import { protectionService } from '../services/api-services';
+import {
+  useProtectionSettings,
+  useUpdateProtectionSettings,
+} from '../hooks/use-protection-settings';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { detectProtectionLevel } from '../lib/utils';
+import { ApiError } from '../lib/api';
 import {
   PROTECTION_PRESETS,
   type ProtectionLevel,
@@ -35,23 +39,19 @@ const levelInfo: Record<
 
 export function ProtectionSettingsPage() {
   const { activeChannel } = useChannel();
+  const { data, isLoading, error } = useProtectionSettings(activeChannel?.id);
+  const updateMutation = useUpdateProtectionSettings(activeChannel?.id);
+
   const [settings, setSettings] = useState<ProtectionSettings | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<ProtectionLevel>('MEDIUM');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!activeChannel) return;
-    setIsLoading(true);
-    protectionService
-      .getSettings(activeChannel.id)
-      .then((data) => {
-        setSettings(data);
-        setSelectedLevel(detectProtectionLevel(data));
-      })
-      .finally(() => setIsLoading(false));
-  }, [activeChannel]);
+    if (data) {
+      setSettings(data);
+      setSelectedLevel(detectProtectionLevel(data));
+    }
+  }, [data]);
 
   const handleLevelSelect = (level: ProtectionLevel) => {
     setSelectedLevel(level);
@@ -66,30 +66,36 @@ export function ProtectionSettingsPage() {
   };
 
   const handleSave = async () => {
-    if (!activeChannel || !settings) return;
-    setIsSaving(true);
+    if (!settings) return;
     setSaved(false);
     try {
-      const updated = await protectionService.updateSettings(
-        activeChannel.id,
-        {
-          autoBlockEnabled: settings.autoBlockEnabled,
-          autoBanEnabled: settings.autoBanEnabled,
-          alertOnDetection: settings.alertOnDetection,
-          riskScoreThreshold: settings.riskScoreThreshold,
-          maxMessagesPerMinute: settings.maxMessagesPerMinute,
-        },
-      );
+      const updated = await updateMutation.mutateAsync({
+        autoBlockEnabled: settings.autoBlockEnabled,
+        autoBanEnabled: settings.autoBanEnabled,
+        alertOnDetection: settings.alertOnDetection,
+        riskScoreThreshold: settings.riskScoreThreshold,
+        maxMessagesPerMinute: settings.maxMessagesPerMinute,
+      });
       setSettings(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } finally {
-      setIsSaving(false);
+    } catch {
+      // mutation error handled by isError if needed
     }
   };
 
-  if (isLoading || !settings) {
+  if (isLoading) {
     return <LoadingSpinner label="Ayarlar yükleniyor..." />;
+  }
+
+  if (error || !settings) {
+    return (
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        {error instanceof ApiError
+          ? error.message
+          : 'Koruma ayarları yüklenemedi.'}
+      </div>
+    );
   }
 
   return (
@@ -220,12 +226,19 @@ export function ProtectionSettingsPage() {
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleSave} isLoading={isSaving}>
+        <Button onClick={handleSave} isLoading={updateMutation.isPending}>
           <Save className="h-4 w-4" />
           Ayarları Kaydet
         </Button>
         {saved && (
           <span className="text-sm text-kick">Ayarlar kaydedildi!</span>
+        )}
+        {updateMutation.isError && (
+          <span className="text-sm text-red-400">
+            {updateMutation.error instanceof ApiError
+              ? updateMutation.error.message
+              : 'Kaydetme başarısız.'}
+          </span>
         )}
       </div>
     </div>

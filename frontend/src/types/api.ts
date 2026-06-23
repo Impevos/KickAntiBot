@@ -93,6 +93,42 @@ export interface SuspiciousUser {
   lastSeen: string;
 }
 
+export interface RiskScore {
+  id: string;
+  score: number;
+  reason: string;
+  algorithmVersion: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface SuspiciousUserDetail extends SuspiciousUser {
+  riskScores?: RiskScore[];
+}
+
+export type ReportPeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+export interface Report {
+  id: string;
+  period: ReportPeriod;
+  startDate: string;
+  endDate: string;
+  summaryData: {
+    totalBotsDetected: number;
+    totalAlerts: number;
+    averageRiskScore: number;
+  };
+  createdAt: string;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  itemsPerPage: number;
+}
+
 export interface ProtectionSettings {
   id: string;
   channelId: string;

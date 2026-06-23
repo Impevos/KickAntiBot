@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -14,6 +15,7 @@ interface ChannelContextValue {
   activeChannel: Channel | null;
   setActiveChannelId: (id: string) => void;
   isLoading: boolean;
+  refreshChannels: () => Promise<void>;
 }
 
 const ChannelContext = createContext<ChannelContextValue | null>(null);
@@ -24,7 +26,7 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
+  const refreshChannels = useCallback(async () => {
     if (!isLoggedIn) {
       setChannels([]);
       setActiveChannelId(null);
@@ -32,16 +34,20 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
-    channelService
-      .getChannels()
-      .then((list) => {
-        setChannels(list);
-        const saved = localStorage.getItem('activeChannelId');
-        const valid = list.find((c) => c.id === saved);
-        setActiveChannelId(valid?.id ?? list[0]?.id ?? null);
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const list = await channelService.getChannels();
+      setChannels(list);
+      const saved = localStorage.getItem('activeChannelId');
+      const valid = list.find((c) => c.id === saved);
+      setActiveChannelId(valid?.id ?? list[0]?.id ?? null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    refreshChannels();
+  }, [refreshChannels]);
 
   const setActiveChannelIdHandler = (id: string) => {
     setActiveChannelId(id);
@@ -58,6 +64,7 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
         activeChannel,
         setActiveChannelId: setActiveChannelIdHandler,
         isLoading,
+        refreshChannels,
       }}
     >
       {children}

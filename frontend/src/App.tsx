@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ChannelProvider } from './context/ChannelContext';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
+import { ChannelGate } from './components/ChannelGate';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -41,10 +42,10 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/bot-activity" element={<BotActivityPage />} />
-            <Route path="/protection" element={<ProtectionSettingsPage />} />
-            <Route path="/logs" element={<ActivityLogsPage />} />
+            <Route path="/dashboard" element={<ChannelGate><DashboardPage /></ChannelGate>} />
+            <Route path="/bot-activity" element={<ChannelGate><BotActivityPage /></ChannelGate>} />
+            <Route path="/protection" element={<ChannelGate><ProtectionSettingsPage /></ChannelGate>} />
+            <Route path="/logs" element={<ChannelGate><ActivityLogsPage /></ChannelGate>} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
