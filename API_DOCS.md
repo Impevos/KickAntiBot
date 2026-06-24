@@ -62,6 +62,54 @@ Dashboard, şüpheli kullanıcılar, alarmlar, raporlar ve koruma ayarları gibi
 
 ---
 
+## Frontend Ekran → Endpoint Eşleşmesi
+
+Ümmü'nün geliştirdiği panel (`frontend/` klasörü) aşağıdaki endpoint'leri kullanır:
+
+| Ekran | Route | Kullanılan Endpoint'ler |
+|-------|-------|-------------------------|
+| Giriş | `/login` | `POST /api/auth/login` |
+| Kayıt | `/register` | `POST /api/auth/register` |
+| Dashboard | `/dashboard` | `GET /api/dashboard/summary`, `GET /api/alerts` |
+| Bot Aktivite | `/bot-activity` | `GET /api/suspicious-users`, `GET /api/suspicious-users/:id`, `GET /api/risk-scores/:id` |
+| Koruma Ayarları | `/protection` | `GET /api/protection-settings`, `PATCH /api/protection-settings` |
+| Log / Geçmiş | `/logs` | `GET /api/activity-logs` |
+| Profil | `/profile` | `GET /api/auth/me`, `PATCH /api/auth/me`, `GET/POST/PUT/DELETE /api/channels` |
+
+> Frontend servis dosyası: `frontend/src/services/api-services.ts`
+
+---
+
+## Tüm Endpoint Özeti
+
+| Method | URL | Auth | Açıklama |
+|--------|-----|------|----------|
+| POST | `/api/auth/register` | Hayır | Kayıt ol |
+| POST | `/api/auth/login` | Hayır | Giriş yap |
+| POST | `/api/auth/logout` | Evet | Çıkış yap |
+| GET | `/api/auth/me` | Evet | Profil bilgisi |
+| PATCH | `/api/auth/me` | Evet | Profil güncelle |
+| GET | `/api/channels` | Evet | Kanal listesi |
+| POST | `/api/channels` | Evet | Kanal oluştur |
+| GET | `/api/channels/:id` | Evet | Kanal detayı |
+| PUT | `/api/channels/:id` | Evet | Kanal güncelle |
+| DELETE | `/api/channels/:id` | Evet | Kanal sil |
+| GET | `/api/dashboard/summary` | Evet | Dashboard özeti |
+| GET | `/api/suspicious-users` | Evet | Şüpheli kullanıcı listesi |
+| GET | `/api/suspicious-users/:id` | Evet | Şüpheli kullanıcı detayı |
+| POST | `/api/suspicious-users` | Evet | Şüpheli kullanıcı ekle |
+| GET | `/api/risk-scores/:suspiciousUserId` | Evet | Risk skoru geçmişi |
+| POST | `/api/risk-scores` | Evet | Risk skoru ekle |
+| GET | `/api/protection-settings` | Evet | Koruma ayarlarını getir |
+| PATCH | `/api/protection-settings` | Evet | Koruma ayarlarını güncelle |
+| GET | `/api/activity-logs` | Evet | Birleşik aktivite geçmişi |
+| GET | `/api/alerts` | Evet | Alarm listesi |
+| PATCH | `/api/alerts/:id/read` | Evet | Alarmı okundu işaretle |
+| GET | `/api/reports` | Evet | Rapor listesi |
+| GET | `/api/reports/:id` | Evet | Rapor detayı |
+
+---
+
 ## 1. Kullanıcı Giriş / Kayıt
 
 ### Kayıt Ol

@@ -135,12 +135,33 @@ src/
 ## Test
 
 ```bash
-# E2E API testleri (24 test, Supabase bağlantısı gerektirir)
+# E2E API testleri (24 test, veritabanı bağlantısı gerektirir)
 npm run test:e2e
 
-# Build kontrolü
+# Backend build kontrolü
 npm run build
 ```
+
+### Backend + Frontend Birlikte Çalıştırma
+
+İki ayrı terminal açın:
+
+**Terminal 1 — Backend:**
+```bash
+npm run start:dev
+# → http://localhost:3000
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm install
+cp .env.example .env   # VITE_USE_MOCK_DATA=false olmalı
+npm run dev
+# → http://localhost:5173
+```
+
+Frontend geliştirme modunda `/api` isteklerini otomatik olarak `localhost:3000`'e yönlendirir (Vite proxy).
 
 ---
 

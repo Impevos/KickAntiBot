@@ -153,7 +153,7 @@ export class ActivityLogsService {
           type: 'REPORT' as const,
           title: `${report.period} raporu`,
           description: `${report.startDate.toISOString()} - ${report.endDate.toISOString()} dönemi özeti`,
-          severity: null,
+          severity: 'LOW',
           createdAt: report.createdAt,
           metadata: {
             period: report.period,
