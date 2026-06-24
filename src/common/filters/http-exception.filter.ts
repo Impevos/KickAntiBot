@@ -4,11 +4,15 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { Prisma } from '@prisma/client';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -32,6 +36,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
           message = exception.message;
         }
       }
+    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      this.logger.error(exception.message, exception.stack);
+
+      if (exception.code === 'P2002') {
+        statusCode = HttpStatus.CONFLICT;
+        message = 'Bu kayıt zaten mevcut (e-posta veya benzersiz alan çakışması).';
+      }
+    } else if (exception instanceof Error) {
+      this.logger.error(exception.message, exception.stack);
     }
 
     response.status(statusCode).json({
