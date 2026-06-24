@@ -6,14 +6,17 @@ import {
   Activity,
   FileText,
   Check,
+  RefreshCw,
 } from 'lucide-react';
 import { useChannel } from '../context/ChannelContext';
 import { useDashboardSummary } from '../hooks/use-dashboard';
-import { useAlerts, useMarkAlertRead } from '../hooks/use-alerts';
+import { useMarkAlertRead } from '../hooks/use-alerts';
+import { useProtectionSettings } from '../hooks/use-protection-settings';
 import { useReports } from '../hooks/use-reports';
 import { StatCard, Card } from '../components/ui/Card';
 import { SeverityBadge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Button } from '../components/ui/Button';
 import { formatRelative, formatDate } from '../lib/utils';
 import { ApiError } from '../lib/api';
 
@@ -23,13 +26,51 @@ const periodLabels = {
   MONTHLY: 'Aylık',
 } as const;
 
+function DashboardError({
+  message,
+  onRetry,
+  isRetrying,
+}: {
+  message: string;
+  onRetry: () => void;
+  isRetrying: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4">
+      <p className="text-sm text-red-400">{message}</p>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="mt-3 gap-2 text-red-300 hover:text-red-200"
+        onClick={onRetry}
+        disabled={isRetrying}
+      >
+        <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+        Tekrar dene
+      </Button>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const { activeChannel } = useChannel();
   const channelId = activeChannel?.id;
 
-  const { data: summary, isLoading, error } = useDashboardSummary(channelId);
-  const { data: alerts = [], isLoading: alertsLoading } = useAlerts(channelId);
-  const { data: reports = [], isLoading: reportsLoading } = useReports(channelId);
+  const {
+    data: summary,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useDashboardSummary(channelId);
+
+  const { data: protection } = useProtectionSettings(channelId);
+  const {
+    data: reports = [],
+    isLoading: reportsLoading,
+    error: reportsError,
+  } = useReports(channelId);
   const markRead = useMarkAlertRead(channelId);
 
   if (isLoading) {
@@ -38,16 +79,24 @@ export function DashboardPage() {
 
   if (error || !summary) {
     return (
-      <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-        {error instanceof ApiError
-          ? error.message
-          : 'Dashboard verileri yüklenemedi.'}
-      </div>
+      <DashboardError
+        message={
+          error instanceof ApiError
+            ? error.message
+            : 'Dashboard verileri yüklenemedi. Backend bağlantısını kontrol edin.'
+        }
+        onRetry={() => refetch()}
+        isRetrying={isFetching}
+      />
     );
   }
 
-  const bannedCount = summary.totalSuspiciousUsersCount;
-  const protectionActive = summary.activeAlertsCount >= 0;
+  const alerts = summary.recentAlerts;
+  const protectionActive = protection
+    ? protection.autoBlockEnabled ||
+      protection.autoBanEnabled ||
+      protection.alertOnDetection
+    : null;
 
   const handleMarkRead = (alertId: string, isRead: boolean) => {
     if (!isRead) {
@@ -81,7 +130,13 @@ export function DashboardPage() {
         />
         <StatCard
           title="Koruma Durumu"
-          value={protectionActive ? 'Aktif' : 'Pasif'}
+          value={
+            protectionActive === null
+              ? '—'
+              : protectionActive
+                ? 'Aktif'
+                : 'Pasif'
+          }
           subtitle={`Bugün ${summary.todayStats.newBotsDetected} yeni bot`}
           icon={<Shield className="h-5 w-5" />}
           accent="green"
@@ -94,9 +149,7 @@ export function DashboardPage() {
             <h2 className="text-base font-semibold text-white">Alarmlar</h2>
             <Activity className="h-4 w-4 text-muted" />
           </div>
-          {alertsLoading ? (
-            <LoadingSpinner />
-          ) : alerts.length === 0 ? (
+          {alerts.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted">
               Henüz alarm bulunmuyor.
             </p>
@@ -114,7 +167,7 @@ export function DashboardPage() {
                       alert.isRead ? 'bg-muted' : 'bg-kick animate-pulse'
                     }`}
                   />
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium text-white">
                         {alert.type.replace(/_/g, ' ')}
@@ -129,7 +182,7 @@ export function DashboardPage() {
                         <Check className="h-3.5 w-3.5 text-kick" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-sm text-muted truncate">
+                    <p className="mt-0.5 truncate text-sm text-muted">
                       {alert.message}
                     </p>
                     <p className="mt-1 text-xs text-muted/70">
@@ -160,9 +213,9 @@ export function DashboardPage() {
               </p>
             </div>
             <div className="rounded-xl bg-surface p-4">
-              <p className="text-sm text-muted">Engellenen / İzlenen</p>
+              <p className="text-sm text-muted">Şüpheli Kullanıcı</p>
               <p className="mt-1 text-2xl font-bold text-amber-400">
-                {bannedCount}
+                {summary.totalSuspiciousUsersCount}
               </p>
             </div>
           </div>
@@ -172,10 +225,16 @@ export function DashboardPage() {
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <FileText className="h-4 w-4 text-kick" />
-          <h2 className="text-base font-semibold text-white">Periyodik Raporlar</h2>
+          <h2 className="text-base font-semibold text-white">
+            Periyodik Raporlar
+          </h2>
         </div>
         {reportsLoading ? (
           <LoadingSpinner />
+        ) : reportsError ? (
+          <p className="py-6 text-center text-sm text-muted">
+            Raporlar yüklenemedi. Daha sonra tekrar deneyin.
+          </p>
         ) : reports.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted">
             Henüz rapor bulunmuyor.

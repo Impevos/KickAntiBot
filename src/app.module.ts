@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { resolveEnvFilePaths } from './config/env.util';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ChannelsModule } from './channels/channels.module';
@@ -15,6 +16,7 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
     // Global Configuration
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: resolveEnvFilePaths(),
     }),
     
     // Core Modules
