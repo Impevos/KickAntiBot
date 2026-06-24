@@ -6,6 +6,14 @@ import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from '@prisma/client';
 
+type SupabaseAuthUser = {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    display_name?: string;
+  };
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -28,7 +36,7 @@ export class AuthService {
     });
 
     if (error) {
-      throw new BadRequestException(error.message);
+      throw this.mapAuthError(error, 'register');
     }
 
     if (!data.user) {
@@ -36,22 +44,13 @@ export class AuthService {
     }
 
     // Explicitly create user profile in PostgreSQL database
-    const localUser = await this.prisma.user.upsert({
-      where: { id: data.user.id },
-      update: {
-        displayName: displayName || email.split('@')[0],
-      },
-      create: {
-        id: data.user.id,
-        email: email,
-        displayName: displayName || email.split('@')[0],
-        role: 'STREAMER',
-      },
-    });
+    const localUser = await this.syncLocalUser(data.user, email, displayName);
 
     return {
       success: true,
-      message: 'Kullanıcı başarıyla kaydedildi.',
+      message: data.session
+        ? 'Kullanıcı başarıyla kaydedildi.'
+        : 'Kayıt başarılı. Giriş yapmadan önce e-posta adresinizi doğrulayın.',
       data: {
         user: {
           id: localUser.id,
@@ -74,7 +73,7 @@ export class AuthService {
     });
 
     if (error) {
-      throw new UnauthorizedException('E-posta adresi veya şifre hatalı.');
+      throw this.mapAuthError(error, 'login');
     }
 
     if (!data.session || !data.user) {
@@ -82,18 +81,7 @@ export class AuthService {
     }
 
     // Sync/Upsert user in local PostgreSQL
-    const localUser = await this.prisma.user.upsert({
-      where: { id: data.user.id },
-      update: {
-        email: data.user.email || email,
-      },
-      create: {
-        id: data.user.id,
-        email: data.user.email || email,
-        displayName: data.user.user_metadata?.display_name || email.split('@')[0],
-        role: 'STREAMER',
-      },
-    });
+    const localUser = await this.syncLocalUser(data.user, email);
 
     return {
       success: true,
@@ -109,6 +97,67 @@ export class AuthService {
         },
       },
     };
+  }
+
+  private async syncLocalUser(
+    authUser: SupabaseAuthUser,
+    fallbackEmail: string,
+    displayNameOverride?: string,
+  ): Promise<User> {
+    const email = authUser.email || fallbackEmail;
+    const displayName =
+      displayNameOverride ||
+      authUser.user_metadata?.display_name ||
+      email.split('@')[0];
+
+    const existingByEmail = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Supabase'de kullanıcı silinip yeniden oluşturulursa UUID değişir;
+    // eski Prisma kaydı unique email kısıtında 500 hatasına yol açar.
+    if (existingByEmail && existingByEmail.id !== authUser.id) {
+      await this.prisma.user.delete({
+        where: { id: existingByEmail.id },
+      });
+    }
+
+    return this.prisma.user.upsert({
+      where: { id: authUser.id },
+      update: {
+        email,
+        displayName,
+      },
+      create: {
+        id: authUser.id,
+        email,
+        displayName,
+        role: 'STREAMER',
+      },
+    });
+  }
+
+  private mapAuthError(
+    error: { message?: string; code?: string },
+    action: 'login' | 'register',
+  ): BadRequestException | UnauthorizedException {
+    const message = error.message?.toLowerCase() ?? '';
+    const code = error.code?.toLowerCase() ?? '';
+
+    if (
+      code === 'email_not_confirmed' ||
+      message.includes('email not confirmed')
+    ) {
+      return new UnauthorizedException(
+        'E-posta adresiniz henüz doğrulanmamış. Gelen kutunuzu (ve spam klasörünü) kontrol edin.',
+      );
+    }
+
+    if (action === 'login') {
+      return new UnauthorizedException('E-posta adresi veya şifre hatalı.');
+    }
+
+    return new BadRequestException(error.message || 'Kimlik doğrulama hatası.');
   }
 
   async logout(token: string) {
