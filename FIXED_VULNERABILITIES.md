@@ -2,6 +2,14 @@
 
 Bu dosya, incelemede bulunan her güvenlik açığını; **ne olduğunu**, **neden riskli olduğunu** ve **nasıl düzeltildiğini** sade bir dille açıklar.
 
+**Depo:** [https://github.com/Impevos/KickAntiBot](https://github.com/Impevos/KickAntiBot) · **Dal:** `main`
+
+| Commit | Açıklama | Link |
+|--------|----------|------|
+| `1a90e97` | Ana güvenlik düzeltmeleri (rate limit, CORS, validation, `.env` çıkarıldı) | [GitHub](https://github.com/Impevos/KickAntiBot/commit/1a90e971d1a2bd9b8702f769748846d8067bfdd5) |
+| `810c3f4` | Ek sertleştirme (UUID pipe, query DTO, kayıt ön kontrolü) | [GitHub](https://github.com/Impevos/KickAntiBot/commit/810c3f417939b9e6a1118aa60d953cf6363e4ecf) |
+| `629d77a` | Sızıntı commit'i (`.env` repoya eklendi — referans) | [GitHub](https://github.com/Impevos/KickAntiBot/commit/629d77a966b7279ff068ef50b23e5396d79029cd) |
+
 ---
 
 ## 1. 🔴 KRİTİK — Veritabanı şifresi GitHub'a sızdı
@@ -151,3 +159,8 @@ Eğer yerel PostgreSQL tablosunda aynı e-postaya sahip bir kayıt bulunuyorsa (
 - `npm run build` → hatasız
 - `npm run test:e2e` → 24/24 geçti
 - `scripts/security-test.ps1` → 12/12 geçti (yetkisiz erişim, route UUID parametreleri, query doğrulama filtreleri, rate limit)
+
+**Push durumu:** Tüm düzeltmeler GitHub `main` dalına push edildi.
+- Ana güvenlik commit'i: [`1a90e97`](https://github.com/Impevos/KickAntiBot/commit/1a90e971d1a2bd9b8702f769748846d8067bfdd5)
+- Ek sertleştirme commit'i: [`810c3f4`](https://github.com/Impevos/KickAntiBot/commit/810c3f417939b9e6a1118aa60d953cf6363e4ecf)
+- Son `main` commit'i: [`1b4b4ae`](https://github.com/Impevos/KickAntiBot/commit/1b4b4ae85a1f77373dff3be577b2f8c95b8d81fb)

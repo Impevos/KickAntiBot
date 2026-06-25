@@ -2,9 +2,15 @@
 
 Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini ve sonucunu listeler.
 
+**Depo:** [https://github.com/Impevos/KickAntiBot](https://github.com/Impevos/KickAntiBot) · **Dal:** `main`
+
+**Test edilen commit'ler:**
+- [`1a90e97`](https://github.com/Impevos/KickAntiBot/commit/1a90e971d1a2bd9b8702f769748846d8067bfdd5) — ana güvenlik düzeltmeleri
+- [`810c3f4`](https://github.com/Impevos/KickAntiBot/commit/810c3f417939b9e6a1118aa60d953cf6363e4ecf) — ek sertleştirme (UUID/query doğrulama)
+
 **Test araçları:**
 - `npm run test:e2e` — 24 otomatik test (fonksiyonel + yetkilendirme)
-- `scripts/security-test.ps1` — 8 canlı güvenlik senaryosu
+- `scripts/security-test.ps1` — 12 canlı güvenlik senaryosu
 - `scripts/integration-test.ps1` — uçtan uca akış
 
 **Sonuç gösterimi:** ✅ beklenen davranış doğrulandı

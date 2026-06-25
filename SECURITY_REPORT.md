@@ -4,6 +4,24 @@
 **Kapsam:** NestJS + Prisma + Supabase backend'inin baştan sona güvenlik incelemesi
 **Genel Durum:** İncelenen tüm alanlarda kritik açıklar kapatıldı. Geriye **tek bir manuel adım** kaldı: sızdırılan veritabanı şifresinin Supabase panelinden değiştirilmesi (aşağıda detaylı).
 
+**Depo:** [https://github.com/Impevos/KickAntiBot](https://github.com/Impevos/KickAntiBot)
+**Dal:** `main`
+
+---
+
+## GitHub Commit Bilgileri (Doğrulama)
+
+Aşağıdaki commit'ler GitHub `main` dalında push edilmiştir; linklerden diff incelenebilir.
+
+| Açıklama | Kısa hash | Tam hash | GitHub linki |
+|----------|-----------|----------|--------------|
+| **Güvenlik düzeltmeleri (ana commit)** — rate limit, CORS, şifre politikası, `.env` git takibinden çıkarıldı, raporlar eklendi | `1a90e97` | `1a90e971d1a2bd9b8702f769748846d8067bfdd5` | [commit/1a90e97](https://github.com/Impevos/KickAntiBot/commit/1a90e971d1a2bd9b8702f769748846d8067bfdd5) |
+| **Ek güvenlik sertleştirmesi** — route UUID doğrulama, query DTO'ları, kayıt ön kontrolü, rapor güncellemesi | `810c3f4` | `810c3f417939b9e6a1118aa60d953cf6363e4ecf` | [commit/810c3f4](https://github.com/Impevos/KickAntiBot/commit/810c3f417939b9e6a1118aa60d953cf6363e4ecf) |
+| **Son commit (main)** — şirket yönetimi talebiyle `.env` tekrar git takibine alındı ⚠️ | `1b4b4ae` | `1b4b4ae85a1f77373dff3be577b2f8c95b8d81fb` | [commit/1b4b4ae](https://github.com/Impevos/KickAntiBot/commit/1b4b4ae85a1f77373dff3be577b2f8c95b8d81fb) |
+| **Sızıntı commit'i (kötü — referans)** — `.env` ilk kez repoya eklendi | `629d77a` | `629d77a966b7279ff068ef50b23e5396d79029cd` | [commit/629d77a](https://github.com/Impevos/KickAntiBot/commit/629d77a966b7279ff068ef50b23e5396d79029cd) |
+
+> **Not:** `1a90e97` commit'inde `.env` repodan çıkarıldı; `1b4b4ae` commit'inde şirket yönetimi talebiyle tekrar eklendi. Güvenlik açısından ideal olan `.env`'nin repoda tutulmamasıdır; şifre değişimi manuel adımı hâlâ geçerlidir.
+
 ---
 
 ## Özet
