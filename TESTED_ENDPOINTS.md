@@ -61,6 +61,7 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 | Kendi kanalını oluştur/listele/güncelle/sil | 200/201 | ✅ |
 | Başkasının kanalını getir/güncelle/sil (IDOR) | 403/404 | ✅ |
 | Eksik/boş alan ile oluşturma | 400 | ✅ |
+| Geçersiz UUID formatı (`:id` route parametresi) | 400 Bad Request | ✅ |
 
 ---
 
@@ -70,9 +71,11 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 |---------|----------|-------|
 | Token olmadan | 401 | ✅ |
 | `channelId` parametresiz listeleme | 400 | ✅ |
-| Geçersiz UUID formatı (`channelId`) | 400 | ✅ |
+| Geçersiz UUID formatı (`channelId` query parametresi) | 400 | ✅ |
+| Geçersiz UUID formatı (`:id` route parametresi) | 400 Bad Request | ✅ |
 | Başkasının kanalına şüpheli kullanıcı ekleme/görüntüleme | 403/404 | ✅ |
 | Geçersiz `severity` enum değeri | 400 | ✅ |
+| Sayfa veya limit numaralarında negatif/geçersiz sayı | 400 | ✅ |
 
 ---
 
@@ -84,6 +87,7 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 | Skor aralığı dışında (0-100 dışı) | 400 | ✅ |
 | Skor metin olarak gönderilirse (yanlış tip) | 400 | ✅ |
 | Başkasının şüpheli kullanıcısına skor ekleme | 403/404 | ✅ |
+| Geçersiz UUID formatı (`:suspiciousUserId` route parametresi) | 400 | ✅ |
 
 ---
 
@@ -93,8 +97,10 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 |---------|----------|-------|
 | Token olmadan | 401 | ✅ |
 | `channelId` parametresiz | 400 | ✅ |
+| Geçersiz UUID formatı (`channelId` query parametresi) | 400 | ✅ |
 | Başkasının kanalının alarmları | 403/404 | ✅ |
 | Alarmı okundu işaretleme (kendi kanalı) | 200 | ✅ |
+| Geçersiz UUID formatı (`:id` route parametresi) | 400 | ✅ |
 
 ---
 
@@ -104,8 +110,10 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 |---------|----------|-------|
 | Token olmadan | 401 | ✅ |
 | `channelId` parametresiz | 400 | ✅ |
+| Geçersiz UUID formatı (`channelId` query parametresi) | 400 | ✅ |
 | Başkasının kanalının raporları/özeti | 403/404 | ✅ |
 | Dashboard özeti (kendi kanalı) | 200 | ✅ |
+| Geçersiz UUID formatı (`:id` route parametresi) | 400 | ✅ |
 
 ---
 
@@ -115,6 +123,7 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 |---------|----------|-------|
 | Token olmadan | 401 | ✅ |
 | `channelId` parametresiz | 400 | ✅ |
+| Geçersiz UUID formatı (`channelId` query parametresi) | 400 | ✅ |
 | Eşik değeri 0-100 dışında | 400 | ✅ |
 | Başkasının kanal ayarlarını okuma/güncelleme | 403/404 | ✅ |
 
@@ -126,6 +135,7 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 |---------|----------|-------|
 | Token olmadan | 401 | ✅ |
 | `channelId` parametresiz | 400 | ✅ |
+| Geçersiz UUID formatı (`channelId` query parametresi) | 400 | ✅ |
 | Başkasının kanal loglarına erişim | 403/404 | ✅ |
 
 ---
@@ -137,7 +147,8 @@ Bu dosya, her endpoint için hangi güvenlik senaryolarının test edildiğini v
 | Yetkisiz erişim koruması | Tüm endpoint'lerde ✅ |
 | Sahiplik / IDOR koruması | Tüm endpoint'lerde ✅ |
 | Girdi doğrulama (boş/yanlış tip/fazla alan) | Tüm endpoint'lerde ✅ |
+| Route / Query Parametresi UUID Doğrulaması | Tüm endpoint'lerde ✅ |
 | Rate limiting | Global + auth özel ✅ |
 | Hata mesajlarında bilgi sızıntısı | Yok ✅ |
 | Otomatik test (e2e) | 24/24 ✅ |
-| Canlı güvenlik testi | 8/8 ✅ |
+| Canlı güvenlik testi | 12/12 ✅ |

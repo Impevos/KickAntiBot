@@ -1,5 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ActivityLogsService, ActivityLogType } from './activity-logs.service';
+import { ActivityLogsService } from './activity-logs.service';
+import { ActivityLogsQueryDto } from './dto/activity-logs-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '@prisma/client';
@@ -12,16 +13,8 @@ export class ActivityLogsController {
   @Get()
   async findAll(
     @GetUser() user: User,
-    @Query('channelId') channelId: string,
-    @Query('type') type?: ActivityLogType,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() query: ActivityLogsQueryDto,
   ) {
-    return this.activityLogsService.findAll(user, {
-      channelId,
-      type,
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
-    });
+    return this.activityLogsService.findAll(user, query);
   }
 }

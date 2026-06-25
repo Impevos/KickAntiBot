@@ -1,5 +1,6 @@
-import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
+import { AlertsQueryDto } from './dto/alerts-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '@prisma/client';
@@ -12,17 +13,13 @@ export class AlertsController {
   @Get()
   async findAll(
     @GetUser() user: User,
-    @Query('channelId') channelId: string,
-    @Query('isRead') isRead?: string,
-    @Query('limit') limit?: string,
+    @Query() query: AlertsQueryDto,
   ) {
-    const isReadBool = isRead === 'true' ? true : isRead === 'false' ? false : undefined;
-    const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.alertsService.findAll(user, channelId, isReadBool, limitNum);
+    return this.alertsService.findAll(user, query.channelId, query.isRead, query.limit);
   }
 
   @Patch(':id/read')
-  async markAsRead(@Param('id') id: string, @GetUser() user: User) {
+  async markAsRead(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
     return this.alertsService.markAsRead(id, user);
   }
 }

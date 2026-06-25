@@ -14,14 +14,17 @@
 | 🟠 Yüksek | Rate limiting (istek sınırlama) yoktu | Eklendi (`@nestjs/throttler`) |
 | 🟡 Orta | CORS tüm dünyaya açıktı | Belirli origin'lere kısıtlandı |
 | 🟡 Orta | Şifre politikası zayıftı (6 karakter, karmaşıklık yok) | 8+ karakter + karmaşıklık zorunlu |
+| 🟡 Orta | Route parametrelerinde UUID doğrulaması eksikti | `ParseUUIDPipe` eklendi (UUID SQL/Format Koruması) |
+| 🟡 Orta | Query (Arama) parametrelerinde veri doğrulaması eksikti | Query DTO'ları oluşturuldu ve doğrulama eklendi |
 | 🟢 Düşük | Bilinmeyen alanlar sessizce kabul ediliyordu | `forbidNonWhitelisted` ile reddediliyor |
 | 🟢 Düşük | `main.ts` içinde `console.log` | NestJS Logger ile değiştirildi |
+| 🟢 Düşük | Çift kayıt/mismatch riskleri (Supabase-Postgres) | `AuthService.register` yerel veritabanı ön kontrolü eklendi |
 | ✅ Sağlam | Yetkilendirme / sahiplik kontrolleri (IDOR) | Zaten doğru — doğrulandı |
 | ✅ Sağlam | Global hata yönetimi / bilgi sızıntısı | Zaten doğru — doğrulandı |
 | ✅ Sağlam | Kodda hardcoded secret | Yok — doğrulandı |
 
-**Bulunan açık sayısı:** 6 (1 kritik, 1 yüksek, 2 orta, 2 düşük)
-**Kapatılan:** 6 / 6 (kritik olanın kod tarafı kapatıldı; şifre değişimi manuel adım olarak bekliyor)
+**Bulunan açık/sertleştirme noktası sayısı:** 9 (1 kritik, 1 yüksek, 4 orta, 3 düşük)
+**Kapatılan/Sertleştirilen:** 9 / 9 (kritik olanın kod tarafı kapatıldı; şifre değişimi manuel adım olarak bekliyor)
 
 ---
 
@@ -36,9 +39,12 @@
 - Email formatı, şifre uzunluğu kontrolleri mevcuttu; **şifre karmaşıklığı eklendi** (büyük/küçük harf + rakam, 8+ karakter).
 - Aynı email ile tekrar kayıt: Supabase + Prisma `P2002` (unique) hatası global filter tarafından yakalanıp **409 Conflict** ile sade mesaj olarak dönüyor. ✅
 
-### 3. Hatalı / Boş / Yanlış Veri
+### 3. Hatalı / Boş / Yanlış Veri ve URL Doğrulama
 - `class-validator` DTO'ları tüm endpoint'lerde aktif; boş/eksik/yanlış tip veri **400 Bad Request** ile reddediliyor, sistem çökmüyor. ✅
 - `forbidNonWhitelisted: true` eklendi: DTO'da tanımsız fazladan alan gönderilirse (örn. `isAdmin: true`) istek reddediliyor — yetki yükseltme denemelerine karşı koruma.
+- **Route ve Query Parametresi Doğrulaması:**
+  - Tüm dinamik route parametrelerine (`:id`, `:suspiciousUserId`) `ParseUUIDPipe` eklendi. Böylece geçersiz formatta UUID içeren URL istekleri (örn. `/api/channels/gecersiz-uuid`) daha servis/veritabanı katmanına ulaşmadan **400 Bad Request** ile durdurulur.
+  - Arama (Query) parametreleri (`?channelId=...` vb.) için özel DTO sınıfları (`ProtectionSettingsQueryDto`, `SuspiciousUsersQueryDto`, `AlertsQueryDto`, vb.) yazıldı. Geçersiz sorgular da artık **400** koduyla engelleniyor.
 
 ### 4. Rate Limiting
 - `@nestjs/throttler` eklendi.
@@ -58,6 +64,7 @@
 ### 7. Gereksiz Log / Test Verisi
 - Tek `console.log` (`main.ts`) düzgün Logger ile değiştirildi.
 - Mock veri yalnızca frontend tarafında ve `VITE_USE_MOCK_DATA` ortam değişkenine bağlı; backend'de production'a sızacak test verisi yok.
+- **Çift Kayıt ve Mismatch Önlemi:** `AuthService.register` metodunda Supabase kaydı öncesi PostgreSQL yerel veritabanında email araması yapılarak yetkisiz/hatalı kayıtların önüne geçildi.
 
 ### 8. Endpoint Bazlı Test
 - Tüm endpoint gruplarına güvenlik senaryoları uygulandı. Detay: [`TESTED_ENDPOINTS.md`](./TESTED_ENDPOINTS.md)
@@ -67,7 +74,7 @@
 ## Test Sonuçları
 
 - **Otomatik testler:** `npm run test:e2e` → 24/24 geçti
-- **Güvenlik senaryoları:** `scripts/security-test.ps1` → 8/8 geçti (yetkisiz erişim, doğrulama, bilinmeyen alan reddi, rate limit)
+- **Güvenlik senaryoları:** `scripts/security-test.ps1` → 12/12 geçti (yetkisiz erişim, route UUID doğrulamaları, query veri tipi ve enum doğrulamaları, rate limit)
 - **Derleme:** `npm run build` → hatasız
 
 ---

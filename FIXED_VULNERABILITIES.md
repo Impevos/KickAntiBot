@@ -100,8 +100,54 @@ Tek başına büyük risk değil ama production'da yapılandırılmamış `conso
 
 ---
 
+## 7. 🟡 ORTA — Route parametrelerinde UUID doğrulaması eksikti
+
+**Ne oldu?**
+`/api/channels/:id`, `/api/suspicious-users/:id`, vb. dinamik URL adreslerindeki `:id` veya `:suspiciousUserId` parametreleri herhangi bir kontrol olmadan düz metin (string) olarak alınıp veritabanı sorgularına iletiliyordu.
+
+**Neden riskli?**
+Kötü niyetli kullanıcılar SQL injection denemeleri yapabilir ya da geçersiz formatta verilerle veritabanı kütüphanesinin (Prisma) beklenmedik hatalar vermesine veya log'larda gereksiz kirliliğe yol açabilirdi. Güvenli API tasarımı gereği, girdilerin en dış katmanda temizlenmesi ve format doğrulaması yapılması kritik bir önlemdir.
+
+**Nasıl düzeltildi?**
+NestJS'in yerleşik `ParseUUIDPipe` boru hattı (pipe) tüm dinamik route parametrelerine eklendi. Artık UUID formatına (v4) uymayan bir parametre gönderildiğinde istek servis katmanına gitmeden doğrudan **400 Bad Request** ile durdurulmaktadır.
+
+---
+
+## 8. 🟡 ORTA — Arama (Query) parametrelerinde veri doğrulaması eksikti
+
+**Ne oldu?**
+`?channelId=...` sorgusu, listelemedeki pagination (`?page=...&limit=...`) veya `severity` enum parametresi DTO doğrulaması olmadan ham şekilde kabul ediliyordu.
+
+**Neden riskli?**
+Sorgularda hatalı formatta UUID gönderilmesi, sayfa numaralarında negatif veya aşırı büyük tam sayılar gönderilmesi ya da veritabanında karşılığı olmayan enum değerlerinin gönderilmesi API'de hatalara, veri tutarsızlıklarına veya yavaşlamalara neden olabilirdi.
+
+**Nasıl düzeltildi?**
+Her bir endpoint sorgusu için özel Query DTO sınıfları oluşturuldu:
+- `ProtectionSettingsQueryDto`
+- `SuspiciousUsersQueryDto`
+- `AlertsQueryDto`
+- `ReportsQueryDto`, `DashboardSummaryQueryDto`
+- `ActivityLogsQueryDto`
+
+Bu DTO'lar `@IsUUID()`, `@IsEnum()`, `@IsInt()`, `@Min()`, `@IsOptional()` gibi filtrelerle donatıldı. Hatalı tipte sorgu atıldığında API anında **400 Bad Request** ile yanıt verir.
+
+---
+
+## 9. 🟢 DÜŞÜK — Supabase Auth ve Yerel Veritabanı arasında çift kayıt/mismatch riski
+
+**Ne oldu?**
+Yeni kullanıcı kayıt (`register`) metodunda öncelikle doğrudan Supabase Auth üzerinde kayıt açılıyordu. Yerel PostgreSQL tablosundaki e-posta kaydına dair bir ön kontrol yapılmıyordu.
+
+**Neden riskli?**
+Eğer yerel PostgreSQL tablosunda aynı e-postaya sahip bir kayıt bulunuyorsa (ya da manuel bir silme/mismatch durumu varsa), Supabase'de başarıyla açılan hesap yerel veritabanına kaydedilirken hata (Prisma unique constraint) veriyor ve Supabase üzerinde yetim (orphan) kullanıcı kayıtları birikiyordu.
+
+**Nasıl düzeltildi?**
+`AuthService.register` metoduna, Supabase Auth API çağrısı yapılmadan önce yerel veritabanında (PostgreSQL) email arayan bir ön kontrol (pre-check) eklendi. Email zaten mevcutsa kayıt işlemi doğrudan engellenip **400 Bad Request** / **409 Conflict** olarak sonlandırılır.
+
+---
+
 ## Düzeltme Sonrası Doğrulama
 
 - `npm run build` → hatasız
 - `npm run test:e2e` → 24/24 geçti
-- `scripts/security-test.ps1` → 8/8 geçti
+- `scripts/security-test.ps1` → 12/12 geçti (yetkisiz erişim, route UUID parametreleri, query doğrulama filtreleri, rate limit)

@@ -25,6 +25,15 @@ export class AuthService {
     const { email, password, displayName } = registerDto;
     const supabase = this.supabaseService.getClient();
 
+    // Local check to see if email is already in use
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Bu e-posta adresiyle kayıtlı bir kullanıcı zaten mevcut.');
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
@@ -22,13 +22,13 @@ export class ChannelsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetUser() user: User) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
     return this.channelsService.findOne(id, user);
   }
 
   @Put(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Body() updateChannelDto: UpdateChannelDto,
   ) {
@@ -36,7 +36,7 @@ export class ChannelsController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @GetUser() user: User) {
+  async remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
     return this.channelsService.remove(id, user);
   }
 }

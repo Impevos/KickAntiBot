@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { RiskScoresService } from './risk-scores.service';
 import { CreateRiskScoreDto } from './dto/create-risk-score.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,7 +17,7 @@ export class RiskScoresController {
 
   @Get(':suspiciousUserId')
   async findBySuspiciousUser(
-    @Param('suspiciousUserId') suspiciousUserId: string,
+    @Param('suspiciousUserId', ParseUUIDPipe) suspiciousUserId: string,
     @GetUser() user: User,
   ) {
     return this.riskScoresService.findBySuspiciousUser(suspiciousUserId, user);
