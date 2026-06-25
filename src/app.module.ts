@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { resolveEnvFilePaths } from './config/env.util';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -18,7 +20,16 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
       isGlobal: true,
       envFilePath: resolveEnvFilePaths(),
     }),
-    
+
+    // Global rate limiting: varsayilan olarak IP basina 60 saniyede 100 istek.
+    // Hassas endpoint'ler (login/register) ayrica @Throttle ile siniandirilir.
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
+
     // Core Modules
     PrismaModule,
     AuthModule,
@@ -31,6 +42,12 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
     ActivityLogsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    // Rate limiting tum uygulamaya global guard olarak uygulanir.
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
