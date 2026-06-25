@@ -29,13 +29,14 @@ export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {channels.length > 0 && (
-            <div className="relative hidden sm:block">
+            <div className="relative min-w-0 max-w-[9.5rem] sm:max-w-none">
               <select
                 value={activeChannel?.id || ''}
                 onChange={(e) => setActiveChannelId(e.target.value)}
-                className="appearance-none rounded-xl border border-border bg-surface-elevated py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-kick/50"
+                className="w-full appearance-none truncate rounded-xl border border-border bg-surface-elevated py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-kick/50"
+                aria-label="Aktif kanal"
               >
                 {channels.map((ch) => (
                   <option key={ch.id} value={ch.id}>

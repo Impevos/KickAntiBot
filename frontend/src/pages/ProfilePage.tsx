@@ -275,24 +275,31 @@ export function ProfilePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-kick/10 text-sm font-bold text-kick">
-                      {channel.channelName.charAt(0).toUpperCase()}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="flex min-w-0 flex-1 items-center gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-kick/10 text-sm font-bold text-kick">
+                        {channel.channelName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-white">
+                          {channel.channelName}
+                        </p>
+                        <p className="truncate text-xs text-muted">
+                          @{channel.kickChannelId}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-white">{channel.channelName}</p>
-                      <p className="text-xs text-muted">@{channel.kickChannelId}</p>
-                    </div>
-                    <span
-                      className={`rounded-md px-2 py-0.5 text-xs font-medium ${
-                        channel.isActive
-                          ? 'bg-kick/10 text-kick'
-                          : 'bg-zinc-500/10 text-zinc-400'
-                      }`}
-                    >
-                      {channel.isActive ? 'Aktif' : 'Pasif'}
-                    </span>
-                    <div className="flex gap-1">
+                    <div className="flex items-center justify-between gap-2 sm:justify-end">
+                      <span
+                        className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${
+                          channel.isActive
+                            ? 'bg-kick/10 text-kick'
+                            : 'bg-zinc-500/10 text-zinc-400'
+                        }`}
+                      >
+                        {channel.isActive ? 'Aktif' : 'Pasif'}
+                      </span>
+                      <div className="flex gap-1">
                       <button
                         onClick={() => startEditChannel(channel)}
                         className="rounded-lg p-2 text-muted hover:bg-surface-hover hover:text-white"
@@ -310,6 +317,7 @@ export function ProfilePage() {
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
+                    </div>
                     </div>
                   </div>
                 )}
