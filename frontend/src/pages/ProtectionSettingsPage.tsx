@@ -116,6 +116,7 @@ export function ProtectionSettingsPage() {
           return (
             <button
               key={level}
+              type="button"
               onClick={() => handleLevelSelect(level)}
               className={`rounded-2xl border p-5 text-left transition ${
                 isSelected
@@ -164,6 +165,7 @@ export function ProtectionSettingsPage() {
                 <p className="text-xs text-muted">{desc}</p>
               </div>
               <button
+                type="button"
                 onClick={() => handleToggle(key)}
                 className={`relative h-6 w-11 shrink-0 rounded-full transition ${
                   settings[key] ? 'bg-kick' : 'bg-border'
