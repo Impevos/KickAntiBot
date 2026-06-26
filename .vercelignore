@@ -1,0 +1,10 @@
+node_modules
+.git
+dist
+coverage
+test
+*.md
+!README.md
+Kick_Anti_Bot_Backend_Makalesi.docx
+scripts
+prisma/seed.ts
