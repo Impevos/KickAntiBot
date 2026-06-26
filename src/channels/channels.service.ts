@@ -9,9 +9,28 @@ export class ChannelsService {
   constructor(private prisma: PrismaService) {}
 
   async create(user: User, createChannelDto: CreateChannelDto) {
-    const { kickChannelId, channelName } = createChannelDto;
+    const kickChannelId = createChannelDto.kickChannelId.trim().toLowerCase();
+    const channelName = createChannelDto.channelName.trim();
 
-    // Check if channel already registered
+    if (!kickChannelId || !channelName) {
+      throw new BadRequestException('Kick kanal ID ve kanal adı boş olamaz.');
+    }
+
+    // Supabase Auth kullanıcısı PostgreSQL'de yoksa kanal FK hatası verir; önce eşitle.
+    await this.prisma.user.upsert({
+      where: { id: user.id },
+      update: {
+        email: user.email,
+        displayName: user.displayName,
+      },
+      create: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+      },
+    });
+
     const existingChannel = await this.prisma.channel.findUnique({
       where: { kickChannelId },
     });
@@ -20,7 +39,6 @@ export class ChannelsService {
       throw new BadRequestException('Bu Kick kanalı sistemde zaten kayıtlı.');
     }
 
-    // Mocking Kick API data (as Kick does not provide a official public API)
     const mockFollowersCount = Math.floor(Math.random() * 500000) + 1000;
     const mockAvatarUrl = `https://kick.com/avatars/${kickChannelId}.png`;
 

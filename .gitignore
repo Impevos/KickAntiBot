@@ -24,3 +24,4 @@ Thumbs.db
 supabase.exe
 supabase-go.exe
 .supabase/
+.vercel

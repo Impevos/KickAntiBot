@@ -84,8 +84,15 @@ export function ProfilePage() {
     e.preventDefault();
     setChannelError('');
     setIsAddingChannel(true);
+    const slug = kickChannelId.trim().toLowerCase();
+    const name = channelName.trim() || slug;
+    if (!slug) {
+      setChannelError('Kick kanal ID (slug) giriniz.');
+      setIsAddingChannel(false);
+      return;
+    }
     try {
-      await channelService.createChannel({ kickChannelId, channelName });
+      await channelService.createChannel({ kickChannelId: slug, channelName: name });
       setKickChannelId('');
       setChannelName('');
       await Promise.all([refreshUser(), refreshChannels(), loadProfile()]);

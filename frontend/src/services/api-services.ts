@@ -165,35 +165,33 @@ export const channelService = {
     kickChannelId: string;
     channelName: string;
   }): Promise<Channel> {
-    return withMockFallback(
-      () =>
-        apiRequest<Channel>('/api/channels', {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }),
-      { ...MOCK_CHANNEL, ...data },
-    );
+    if (USE_MOCK) {
+      return { ...MOCK_CHANNEL, ...data, kickChannelId: data.kickChannelId.toLowerCase() };
+    }
+    return apiRequest<Channel>('/api/channels', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   async updateChannel(
     id: string,
     data: { channelName?: string; isActive?: boolean },
   ): Promise<Channel> {
-    return withMockFallback(
-      () =>
-        apiRequest<Channel>(`/api/channels/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }),
-      { ...MOCK_CHANNEL, id, ...data },
-    );
+    if (USE_MOCK) {
+      return { ...MOCK_CHANNEL, id, ...data };
+    }
+    return apiRequest<Channel>(`/api/channels/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
   async deleteChannel(id: string): Promise<void> {
-    return withMockFallback(
-      () => apiRequest<void>(`/api/channels/${id}`, { method: 'DELETE' }),
-      undefined,
-    );
+    if (USE_MOCK) {
+      return;
+    }
+    return apiRequest<void>(`/api/channels/${id}`, { method: 'DELETE' });
   },
 };
 
