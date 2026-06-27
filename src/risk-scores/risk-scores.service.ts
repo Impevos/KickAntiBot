@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateRiskScoreDto } from './dto/create-risk-score.dto';
+import { DetectionAlertService } from '../alerts/detection-alert.service';
 import { User, Role, Severity } from '@prisma/client';
 
 @Injectable()
 export class RiskScoresService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private detectionAlert: DetectionAlertService,
+  ) {}
 
   private async verifySuspiciousUserOwnership(suspiciousUserId: string, user: User) {
     const suspiciousUser = await this.prisma.suspiciousUser.findUnique({
@@ -57,6 +61,15 @@ export class RiskScoresService {
         severity: dynamicSeverity,
         lastSeen: new Date(),
       },
+    });
+
+    await this.detectionAlert.maybeAlertOnDetection({
+      channelId: suspiciousUser.channelId,
+      suspiciousUserId,
+      username: suspiciousUser.username,
+      score,
+      severity: dynamicSeverity,
+      reason,
     });
 
     return {

@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateSuspiciousUserDto } from './dto/create-suspicious-user.dto';
+import { DetectionAlertService } from '../alerts/detection-alert.service';
 import { User, Role, SuspiciousUserStatus, Severity } from '@prisma/client';
 
 @Injectable()
 export class SuspiciousUsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private detectionAlert: DetectionAlertService,
+  ) {}
 
   private async verifyChannelOwnership(channelId: string, user: User) {
     const channel = await this.prisma.channel.findUnique({
@@ -60,10 +64,18 @@ export class SuspiciousUsersService {
         username,
         reason,
         tags: tags || [],
-        status: SuspiciousUserStatus.INVESTIGATING, // Default status for manual additions
+        status: SuspiciousUserStatus.INVESTIGATING,
         severity: severity || Severity.MEDIUM,
         channelId,
       },
+    });
+
+    await this.detectionAlert.maybeAlertOnNewSuspiciousUser({
+      channelId,
+      suspiciousUserId: suspiciousUser.id,
+      username,
+      severity: suspiciousUser.severity,
+      reason,
     });
 
     return {
