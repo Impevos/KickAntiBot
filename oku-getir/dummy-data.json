@@ -1,0 +1,186 @@
+{
+  "categories": [
+    { "id": "c1000001-0000-4000-8000-000000000001", "name": "Roman", "slug": "roman", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000002", "name": "Kişisel Gelişim", "slug": "kisisel-gelisim", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000003", "name": "Üniversite Kitapları", "slug": "universite-kitaplari", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000004", "name": "Lise Ders Kitapları", "slug": "lise-ders-kitaplari", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000005", "name": "Yazılım ve Teknoloji", "slug": "yazilim-ve-teknoloji", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000006", "name": "Çocuk Kitapları", "slug": "cocuk-kitaplari", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000007", "name": "Sınav Hazırlık", "slug": "sinav-hazirlik", "createdAt": "2026-01-15T10:00:00.000Z" },
+    { "id": "c1000001-0000-4000-8000-000000000008", "name": "Akademik Kitaplar", "slug": "akademik-kitaplar", "createdAt": "2026-01-15T10:00:00.000Z" }
+  ],
+  "users": [
+    {
+      "id": "u1000001-0000-4000-8000-000000000001",
+      "name": "Ayşe Yılmaz",
+      "email": "ayse.yilmaz@example.com",
+      "createdAt": "2026-02-01T09:30:00.000Z"
+    }
+  ],
+  "books": [
+    {
+      "id": "b1000001-0000-4000-8000-000000000001",
+      "title": "Saatleri Ayarlama Enstitüsü",
+      "author": "Ahmet Hamdi Tanpınar",
+      "description": "Türk edebiyatının en önemli romanlarından biri. İstanbul'un değişen yüzünü anlatır.",
+      "categoryId": "c1000001-0000-4000-8000-000000000001",
+      "category": "Roman",
+      "categorySlug": "roman",
+      "image": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400",
+      "condition": "iyi",
+      "rentPrice": 45,
+      "salePrice": 120,
+      "isAvailable": true,
+      "sellerName": "Mehmet K.",
+      "createdAt": "2026-03-01T14:00:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000002",
+      "title": "İkigai",
+      "author": "Héctor García & Francesc Miralles",
+      "description": "Japonların uzun ve mutlu yaşam sırrını keşfedin.",
+      "categoryId": "c1000001-0000-4000-8000-000000000002",
+      "category": "Kişisel Gelişim",
+      "categorySlug": "kisisel-gelisim",
+      "image": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400",
+      "condition": "yeni",
+      "rentPrice": 30,
+      "salePrice": 85,
+      "isAvailable": true,
+      "sellerName": "Zeynep A.",
+      "createdAt": "2026-03-02T10:30:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000003",
+      "title": "Calculus — Early Transcendentals",
+      "author": "James Stewart",
+      "description": "Mühendislik ve matematik bölümü öğrencileri için temel calculus ders kitabı.",
+      "categoryId": "c1000001-0000-4000-8000-000000000003",
+      "category": "Üniversite Kitapları",
+      "categorySlug": "universite-kitaplari",
+      "image": "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400",
+      "condition": "orta",
+      "rentPrice": 60,
+      "salePrice": 250,
+      "isAvailable": true,
+      "sellerName": "Can D.",
+      "createdAt": "2026-03-03T08:00:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000004",
+      "title": "TYT Matematik Soru Bankası",
+      "author": "Karekök Yayınları",
+      "description": "Lise mezunları için TYT matematik soru bankası, az kullanılmış.",
+      "categoryId": "c1000001-0000-4000-8000-000000000007",
+      "category": "Sınav Hazırlık",
+      "categorySlug": "sinav-hazirlik",
+      "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400",
+      "condition": "iyi",
+      "rentPrice": 25,
+      "salePrice": 90,
+      "isAvailable": true,
+      "sellerName": "Elif S.",
+      "createdAt": "2026-03-04T16:45:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000005",
+      "title": "Clean Code",
+      "author": "Robert C. Martin",
+      "description": "Yazılım geliştiriciler için temiz kod yazma prensipleri.",
+      "categoryId": "c1000001-0000-4000-8000-000000000005",
+      "category": "Yazılım ve Teknoloji",
+      "categorySlug": "yazilim-ve-teknoloji",
+      "image": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400",
+      "condition": "iyi",
+      "rentPrice": 40,
+      "salePrice": 180,
+      "isAvailable": true,
+      "sellerName": "Burak T.",
+      "createdAt": "2026-03-05T11:20:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000006",
+      "title": "Küçük Prens",
+      "author": "Antoine de Saint-Exupéry",
+      "description": "Her yaştan okuyucuya hitap eden klasik çocuk kitabı.",
+      "categoryId": "c1000001-0000-4000-8000-000000000006",
+      "category": "Çocuk Kitapları",
+      "categorySlug": "cocuk-kitaplari",
+      "image": "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400",
+      "condition": "yeni",
+      "rentPrice": 15,
+      "salePrice": 55,
+      "isAvailable": true,
+      "sellerName": "Deniz M.",
+      "createdAt": "2026-03-06T09:00:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000007",
+      "title": "Fizik 1 — Mekanik",
+      "author": "Halliday & Resnick",
+      "description": "Üniversite fizik dersleri için referans kitap, kiralık.",
+      "categoryId": "c1000001-0000-4000-8000-000000000008",
+      "category": "Akademik Kitaplar",
+      "categorySlug": "akademik-kitaplar",
+      "image": "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400",
+      "condition": "orta",
+      "rentPrice": 55,
+      "salePrice": null,
+      "isAvailable": true,
+      "sellerName": "Oğuz H.",
+      "createdAt": "2026-03-07T13:15:00.000Z"
+    },
+    {
+      "id": "b1000001-0000-4000-8000-000000000008",
+      "title": "Türk Dili ve Edebiyatı 9",
+      "author": "MEB Yayınları",
+      "description": "9. sınıf lise ders kitabı, temiz kullanılmış.",
+      "categoryId": "c1000001-0000-4000-8000-000000000004",
+      "category": "Lise Ders Kitapları",
+      "categorySlug": "lise-ders-kitaplari",
+      "image": "https://images.unsplash.com/photo-1497633762303-f6a846b4e567?w=400",
+      "condition": "iyi",
+      "rentPrice": 10,
+      "salePrice": 35,
+      "isAvailable": false,
+      "sellerName": "Selin R.",
+      "createdAt": "2026-03-08T17:30:00.000Z"
+    }
+  ],
+  "cartItems": [
+    {
+      "id": "ca100001-0000-4000-8000-000000000001",
+      "userId": "u1000001-0000-4000-8000-000000000001",
+      "bookId": "b1000001-0000-4000-8000-000000000002",
+      "quantity": 1,
+      "addedAt": "2026-03-10T08:00:00.000Z"
+    },
+    {
+      "id": "ca100001-0000-4000-8000-000000000002",
+      "userId": "u1000001-0000-4000-8000-000000000001",
+      "bookId": "b1000001-0000-4000-8000-000000000005",
+      "quantity": 1,
+      "addedAt": "2026-03-10T08:05:00.000Z"
+    }
+  ],
+  "favorites": [
+    {
+      "id": "fa100001-0000-4000-8000-000000000001",
+      "userId": "u1000001-0000-4000-8000-000000000001",
+      "bookId": "b1000001-0000-4000-8000-000000000001",
+      "addedAt": "2026-03-09T12:00:00.000Z"
+    },
+    {
+      "id": "fa100001-0000-4000-8000-000000000002",
+      "userId": "u1000001-0000-4000-8000-000000000001",
+      "bookId": "b1000001-0000-4000-8000-000000000006",
+      "addedAt": "2026-03-09T12:30:00.000Z"
+    },
+    {
+      "id": "fa100001-0000-4000-8000-000000000003",
+      "userId": "u1000001-0000-4000-8000-000000000001",
+      "bookId": "b1000001-0000-4000-8000-000000000004",
+      "addedAt": "2026-03-09T13:00:00.000Z"
+    }
+  ]
+}

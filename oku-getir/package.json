@@ -1,0 +1,13 @@
+{
+  "name": "oku-getir",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
