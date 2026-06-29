@@ -14,7 +14,8 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 
-# local env files (GUVENLIK: yonetim istegiyle .env takip ediliyor)
+# local env files (GUVENLIK: .env asla commit'lenmemeli - gizli anahtarlar icerir)
+.env
 .env.local
 .env.development.local
 .env.test.local
